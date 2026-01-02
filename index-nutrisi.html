@@ -11,7 +11,6 @@
     <style>
         /* --- CORE VARIABLES --- */
         :root {
-            /* Palette: Modern Emerald & Slate */
             --primary-600: #059669;
             --primary-500: #10b981;
             --primary-100: #d1fae5;
@@ -31,17 +30,16 @@
             --warning: #f59e0b;
             --warning-bg: #fffbeb;
 
-            /* Theming Mapping */
             --bg-app: var(--slate-50);
             --bg-card: var(--white);
             --text-heading: var(--slate-900);
             --text-body: var(--slate-500);
             --border-color: var(--slate-200);
             
-            /* Modern UI Elements */
             --radius-xl: 24px;
             --radius-lg: 16px;
             --radius-md: 10px;
+            
             --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             --shadow-float: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
             --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
@@ -50,13 +48,13 @@
         }
 
         [data-theme="dark"] {
-            --bg-app: #0B1120; /* Deepest Navy */
-            --bg-card: #151e32; /* Lighter Navy */
+            --bg-app: #0B1120;
+            --bg-card: #151e32;
             --text-heading: #f8fafc;
             --text-body: #94a3b8;
             --border-color: #293548;
             --shadow-float: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            --slate-50: #0f172a; /* Override for table hover */
+            --slate-50: #0f172a;
         }
 
         /* --- RESET & BASE --- */
@@ -74,12 +72,10 @@
 
         /* --- LAYOUT GRID --- */
         .app-container {
-            max-width: 1440px;
+            width: 100%;
             margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            gap: 2rem;
-            /* Layout: Header -> Stats -> Main Content (Chart+Form) -> Table */
+            display: flex;
+            flex-direction: column;
         }
 
         /* --- HEADER --- */
@@ -89,6 +85,7 @@
             align-items: center;
             padding-bottom: 1rem;
             border-bottom: 1px solid transparent;
+            margin-bottom: 1.5rem;
         }
 
         .brand {
@@ -108,10 +105,11 @@
             color: white;
             font-size: 1.5rem;
             box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.3);
+            flex-shrink: 0;
         }
 
         .brand-text h1 {
-            font-size: 1.5rem;
+            font-size: 1.35rem;
             font-weight: 800;
             letter-spacing: -0.03em;
             color: var(--text-heading);
@@ -127,7 +125,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             color: var(--text-heading);
-            padding: 0.75rem 1.25rem;
+            padding: 0.6rem 1rem;
             border-radius: 99px;
             cursor: pointer;
             font-weight: 600;
@@ -137,6 +135,7 @@
             gap: 0.5rem;
             transition: var(--transition);
             box-shadow: var(--shadow-subtle);
+            white-space: nowrap;
         }
 
         .theme-toggle:hover {
@@ -145,11 +144,11 @@
             border-color: var(--primary-500);
         }
 
-        /* --- STATS GRID (Hero Section) --- */
+        /* --- STATS GRID --- */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat-card {
@@ -165,7 +164,6 @@
             overflow: hidden;
         }
 
-        /* Decorative gradient blob for stats */
         .stat-card::after {
             content: '';
             position: absolute;
@@ -181,7 +179,7 @@
 
         .stat-label {
             color: var(--text-body);
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -189,17 +187,17 @@
         }
 
         .stat-value {
-            font-size: 2.25rem;
+            font-size: 2rem;
             font-weight: 800;
             color: var(--text-heading);
             letter-spacing: -0.02em;
         }
 
-        /* --- MAIN CONTENT GRID (Chart + Input) --- */
+        /* --- MAIN CONTENT (Chart & Form) --- */
         .main-content {
             display: grid;
-            grid-template-columns: 2fr 1fr; /* Chart takes more space */
             gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .card {
@@ -214,9 +212,6 @@
 
         .card-header {
             margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
 
         .card-header h2 {
@@ -227,7 +222,6 @@
             gap: 0.75rem;
         }
 
-        /* --- INPUT FORM --- */
         .input-wrapper {
             display: flex;
             flex-direction: column;
@@ -244,7 +238,7 @@
 
         .form-control {
             width: 100%;
-            padding: 1rem 1.25rem;
+            padding: 0.875rem 1rem;
             background: var(--bg-app);
             border: 2px solid transparent;
             border-radius: var(--radius-lg);
@@ -311,15 +305,12 @@
             background: var(--danger-bg);
             border-color: var(--danger);
         }
-        [data-theme="dark"] .btn-text:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-
+        
         /* --- CHART --- */
         .chart-wrapper {
             position: relative;
-            height: 350px;
             width: 100%;
+            min-height: 300px;
         }
 
         /* --- TABLE --- */
@@ -333,6 +324,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
+            min-width: 600px; /* Ensures table doesn't squash on mobile */
         }
 
         th {
@@ -342,12 +334,12 @@
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            padding: 1.25rem;
+            padding: 1rem;
             text-align: left;
         }
 
         td {
-            padding: 1.25rem;
+            padding: 1rem;
             border-top: 1px solid var(--border-color);
             color: var(--text-heading);
             font-weight: 500;
@@ -357,7 +349,6 @@
             background-color: var(--bg-app);
         }
 
-        /* Badges & Actions */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -370,23 +361,24 @@
 
         .badge-success { background: var(--primary-100); color: var(--primary-600); }
         .badge-warning { background: var(--danger-bg); color: var(--danger); }
-
+        
         [data-theme="dark"] .badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
         [data-theme="dark"] .badge-warning { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
 
-        .btn-icon {
-            padding: 0.5rem;
+        /* Delete Button in Table */
+        .delete-btn-small {
+            padding: 0.4rem 0.8rem;
             border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
             background: transparent;
             color: var(--text-body);
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
-            width: auto; /* Override default button width */
-            display: inline-block;
         }
-
-        .btn-icon:hover {
+        
+        .delete-btn-small:hover {
             background: var(--danger-bg);
             color: var(--danger);
             border-color: var(--danger);
@@ -398,6 +390,7 @@
             bottom: 2rem;
             right: 2rem;
             z-index: 100;
+            max-width: 90%;
         }
         
         .alert {
@@ -410,8 +403,9 @@
             align-items: center;
             animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             backdrop-filter: blur(10px);
+            font-size: 0.9rem;
         }
-
+        
         .alert-success { background: var(--primary-600); color: white; }
         .alert-warning { background: var(--warning); color: white; }
 
@@ -420,19 +414,115 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .main-content { grid-template-columns: 1fr; }
-            .chart-wrapper { height: 300px; }
+        /* =========================================
+           RESPONSIVE BREAKPOINTS
+           ========================================= */
+
+        /* 1. SANGAT KECIL (Mobile) < 640px */
+        /* Contoh: 320px, 360px, 375px */
+        @media (max-width: 640px) {
+            .app-container {
+                padding: 1rem;
+                max-width: 100%;
+            }
+
+            .header-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .theme-toggle {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr; /* 1 Kartu per baris */
+                gap: 1rem;
+            }
+            
+            .stat-card {
+                flex-direction: row;
+                align-items: center;
+                padding: 1.25rem;
+            }
+            
+            .stat-label { margin-bottom: 0; margin-right: auto; }
+            .stat-value { font-size: 1.5rem; }
+
+            .main-content {
+                grid-template-columns: 1fr; /* Stack Chart & Form */
+            }
+
+            .card {
+                padding: 1.25rem; /* Kurangi padding kartu */
+            }
+
+            .chart-wrapper {
+                height: 250px;
+                min-height: 250px;
+            }
         }
 
-        @media (max-width: 768px) {
-            .app-container { padding: 1rem; gap: 1.5rem; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .header-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
-            .theme-toggle { width: 100%; justify-content: center; }
-            .stat-value { font-size: 1.75rem; }
+        /* 2. KECIL (Tablet Horizontal / Mobile Besar) 641px - 991px */
+        /* Contoh: 768px */
+        @media (min-width: 641px) and (max-width: 991px) {
+            .app-container {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2 Kartu per baris */
+            }
+
+            .main-content {
+                grid-template-columns: 1fr; /* Tetap Stack Chart & Form agar lega */
+            }
+            
+            .chart-wrapper {
+                height: 350px;
+            }
         }
+
+        /* 3. MEDIUM (Tablet Vertikal / Laptop Kecil) 992px - 1199px */
+        /* Contoh: 1024px (iPad Pro Portrait), Laptop 13 inch */
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .app-container {
+                padding: 2rem;
+                max-width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr); /* Kembali ke 4 kolom */
+            }
+
+            .main-content {
+                grid-template-columns: 1.5fr 1fr; /* Chart 60%, Form 40% */
+            }
+        }
+
+        /* 4. BESAR (Desktop) 1200px ke atas */
+        @media (min-width: 1200px) {
+            .app-container {
+                max-width: 1440px;
+                padding: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .main-content {
+                grid-template-columns: 2fr 1fr; /* Chart lebih lebar */
+            }
+            
+            .chart-wrapper {
+                height: 400px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -441,7 +531,7 @@
         <header class="header-bar">
             <div class="brand">
                 <div class="brand-icon">
-                    <i class="ri-plant-line">🌱</i>
+                    <i class="ri-plant-line"></i>
                 </div>
                 <div class="brand-text">
                     <h1>Smart Grow</h1>
@@ -658,7 +748,7 @@
             if(latest.ph < 5.5 || latest.ph > 6.5) {
                 phEl.style.color = 'var(--danger)';
             } else {
-                phEl.style.color = 'var(--primary)';
+                phEl.style.color = 'var(--text-heading)';
             }
         }
 
@@ -696,7 +786,7 @@
                     }, {
                         label: 'PPM',
                         data: nutritionData.map(d => d.ppm),
-                        borderColor: '#3b82f6', // Tetap biru agar kontras
+                        borderColor: '#3b82f6', 
                         backgroundColor: 'rgba(59, 130, 246, 0.05)',
                         yAxisID: 'y1',
                         tension: 0.4,
@@ -716,7 +806,7 @@
                         legend: {
                             labels: {
                                 color: textColor,
-                                font: { family: 'Inter', size: 12 }
+                                font: { family: 'Plus Jakarta Sans', size: 12 }
                             }
                         }
                     },
@@ -750,12 +840,12 @@
             const tbody = document.getElementById('dataTableBody');
             
             if (nutritionData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Belum ada data</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-body); padding: 2rem;">Belum ada data</td></tr>';
                 return;
             }
 
             tbody.innerHTML = nutritionData.slice().reverse().map(d => {
-                const phWarning = d.ph < 5.5 || d.ph > 6.5; // Menggunakan rentang umum hidroponik
+                const phWarning = d.ph < 5.5 || d.ph > 6.5;
                 const badgeClass = phWarning ? 'badge-warning' : 'badge-success';
                 const statusText = phWarning ? 'Cek Nutrisi' : 'Normal';
                 
@@ -767,7 +857,7 @@
                 return `
                     <tr>
                         <td>${formattedDate}</td>
-                        <td style="font-weight:600; color: ${phWarning ? 'var(--danger)' : 'var(--text-main)'}">${d.ph.toFixed(1)}</td>
+                        <td style="font-weight:600; color: ${phWarning ? 'var(--danger)' : 'inherit'}">${d.ph.toFixed(1)}</td>
                         <td>${d.ppm}</td>
                         <td><span class="badge ${badgeClass}">${statusText}</span></td>
                         <td style="text-align: right;">
@@ -792,7 +882,6 @@
             }, 3000);
         }
 
-        // Input validation listener
         document.getElementById('ph').addEventListener('input', function() {
             const ph = parseFloat(this.value);
             if (ph && (ph < 0 || ph > 14)) {
@@ -802,7 +891,6 @@
             }
         });
 
-        // Initial Load
         loadData();
     </script>
 </body>
