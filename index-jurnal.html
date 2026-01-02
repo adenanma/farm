@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartGarden MADNN</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- COPY STYLE DARI VERSI SEBELUMNYA (TIDAK BERUBAH BANYAK) --- */
+        :root {
+            --primary: #059669;
+            --primary-light: #d1fae5;
+            --bg-body: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        [data-theme="dark"] {
+            --primary: #10b981;
+            --primary-light: #064e3b;
+            --bg-body: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow-sm: none;
+            --shadow-md: none;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s; }
+
+        .sidebar {
+            width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 1.5rem; z-index: 50; transition: 0.3s;
+        }
+        .brand {
+            font-size: 1.4rem; font-weight: 800; color: var(--primary);
+            margin-bottom: 2.5rem; display: flex; align-items: center; gap: 12px;
+        }
+        .nav-link {
+            padding: 0.9rem 1rem; margin-bottom: 0.5rem; border-radius: var(--radius-md);
+            color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 0.95rem;
+        }
+        .nav-link:hover { background: var(--bg-body); color: var(--primary); }
+        .nav-link.active { background: var(--primary-light); color: var(--primary); }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem; position: relative; scroll-behavior: smooth; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+        .header-title h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 5px; }
+        .header-title p { color: var(--text-muted); font-size: 0.9rem; }
+        
+        .digital-clock {
+            font-size: 2.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; line-height: 1;
+        }
+        .date-display { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; margin-top: 5px; }
+
+        .theme-toggle {
+            background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted);
+            width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+            cursor: pointer; transition: 0.3s; margin-left: 10px;
+        }
+        .theme-toggle:hover { color: var(--text-main); border-color: var(--text-muted); }
+
+        .weather-banner {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border-radius: var(--radius-lg); padding: 1.5rem 2rem; color: white;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2rem; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+            position: relative; overflow: hidden;
+        }
+        .weather-banner::before {
+            content: ''; position: absolute; right: -20px; top: -50px; width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1); border-radius: 50%;
+        }
+        .weather-info h2 { font-size: 2rem; font-weight: 800; }
+        .weather-info p { opacity: 0.9; margin-top: 5px; font-weight: 500; }
+        .weather-icon { font-size: 3rem; opacity: 0.9; }
+        
+        .rain-delay-btn {
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+            color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer;
+            font-size: 0.85rem; margin-top: 10px; display: none; align-items: center; gap: 8px;
+            transition: 0.3s;
+        }
+        .rain-delay-btn:hover { background: rgba(255,255,255,0.3); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        
+        .card {
+            background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); transition: 0.3s;
+        }
+        .stat-card { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+        .stat-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .stat-icon { 
+            width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; 
+            font-size: 1.2rem;
+        }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-main); }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; }
+
+        .action-bar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .search-wrapper { position: relative; flex: 1; min-width: 250px; }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-input {
+            width: 100%; padding: 0.8rem 1rem 0.8rem 2.8rem; border: 1px solid var(--border);
+            border-radius: var(--radius-md); outline: none; background: var(--bg-surface); color: var(--text-main);
+            transition: 0.3s;
+        }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        
+        #sortSelect { 
+            padding-left: 1rem; min-width: 180px; 
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem; border: none; border-radius: var(--radius-md);
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            transition: 0.2s; font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #047857; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-secondary { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-main); }
+        .btn-secondary:hover { background: var(--bg-body); border-color: #cbd5e1; }
+        .btn-danger { background: #fee2e2; color: #dc2626; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        .plant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+
+        .plant-card {
+            background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden;
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border); cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative;
+        }
+        .plant-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+        
+        .plant-img-wrapper { height: 180px; position: relative; overflow: hidden; background: #e2e8f0; }
+        .plant-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .plant-card:hover .plant-img { transform: scale(1.08); }
+        
+        .card-body { padding: 1.25rem; }
+        .badge {
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 20px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-block; margin-bottom: 8px;
+        }
+        
+        .status-pill {
+            margin-top: 12px; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+            background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .status-pill.urgent { background: #fef2f2; color: #dc2626; border-color: #fecaca; animation: pulse 2s infinite; }
+        .status-pill.today { background: #eff6ff; color: #3b82f6; border-color: #bfdbfe; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            z-index: 100; display: none; place-items: center; opacity: 0; transition: 0.3s;
+        }
+        .modal-overlay.active { display: grid; opacity: 1; }
+        
+        .modal-box {
+            background: var(--bg-card); width: 90%; max-width: 550px; max-height: 90vh;
+            border-radius: var(--radius-lg); overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transform: scale(0.9); transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid var(--border);
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-main); }
+        .smart-suggestion { 
+            font-size: 0.8rem; color: var(--primary); margin-top: 4px; display: none; align-items: center; gap: 5px; cursor: pointer;
+        }
+        
+        .day-selector-container {
+            display: flex; gap: 8px; justify-content: space-between; margin-bottom: 8px;
+        }
+        .day-check {
+            flex: 1; height: 40px; border: 1px solid var(--border); border-radius: 8px;
+            display: grid; place-items: center; cursor: pointer; font-size: 0.8rem; font-weight: 700;
+            color: var(--text-muted); background: var(--bg-body); transition: 0.2s; user-select: none;
+        }
+        .day-check.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+        /* Pembeda warna untuk pupuk saat aktif */
+        .day-check.fert-active {
+            background: #f59e0b; color: white; border-color: #f59e0b;
+        }
+        
+        .day-check:hover:not(.active):not(.fert-active) { border-color: var(--primary); color: var(--primary); }
+
+        .img-preview-container { 
+            width: 100%; height: 150px; background: #f1f5f9; border-radius: 8px; 
+            margin-top: 10px; display: none; overflow: hidden; border: 1px solid var(--border);
+        }
+        .img-preview-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar {
+                width: 100%; height: auto; flex-direction: row; justify-content: space-around;
+                padding: 12px; border-top: 1px solid var(--border); border-right: none;
+                position: fixed; bottom: 0; order: 2; background: var(--bg-surface);
+                box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+            }
+            .brand { display: none; }
+            .nav-link { flex-direction: column; gap: 4px; font-size: 0.7rem; padding: 0.5rem; margin: 0; border-radius: 8px; }
+            .nav-link i { font-size: 1.2rem; }
+            .main-content { order: 1; padding: 1.5rem; padding-bottom: 100px; }
+            .header-title h1 { font-size: 1.5rem; }
+            .weather-banner { flex-direction: column; text-align: center; gap: 1rem; }
+            .weather-banner::before { display: none; }
+            .header-row { flex-direction: column; gap: 1rem; }
+            .digital-clock { font-size: 2rem; }
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: #1e293b; color: white; padding: 12px 24px; border-radius: 50px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 2000;
+            display: flex; align-items: center; gap: 10px; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="brand"><i class="fa-solid fa-leaf"></i> SG MADNN</div>
+        <div class="nav-link active" onclick="app.switchTab('dashboard')">
+            <i class="fa-solid fa-chart-pie"></i> <span>Beranda</span>
+        </div>
+        <div class="nav-link" onclick="app.switchTab('garden')">
+            <i class="fa-solid fa-seedling"></i> <span>Kebun Saya</span>
+        </div>
+        <div class="nav-link" onclick="app.switchTab('settings')">
+            <i class="fa-solid fa-sliders"></i> <span>Pengaturan</span>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <section id="dashboard" class="view-section">
+            <div class="header-row">
+                <div class="header-title">
+                    <h1 id="greeting">Selamat Pagi, MADNN!</h1>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="theme-toggle" onclick="app.toggleTheme()">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div id="clockDisplay" class="digital-clock">00:00:00</div>
+                    <div id="dateDisplay" class="date-display">Memuat...</div>
+                </div>
+            </div>
+
+            <div class="weather-banner">
+                <div class="weather-info">
+                    <h2 id="weatherTemp">28°C</h2>
+                    <p id="weatherDesc">Memuat Cuaca...</p>
+                    <div style="margin-top: 10px; font-size: 0.9rem; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; display: inline-block;">
+                        <i class="fa-solid fa-droplet"></i> Tips: Cuaca panas, cek kelembaban tanah.
+                    </div>
+                    <button id="rainDelayBtn" class="rain-delay-btn" onclick="app.applyRainDelay()">
+                        <i class="fa-solid fa-clock"></i> Lewati Jadwal Hari Ini (Hujan)
+                    </button>
+                </div>
+                <div class="weather-icon">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="stat-head">
+                        <span class="stat-label">TOTAL TANAMAN</span>
+                        <div class="stat-icon" style="background: #ecfdf5; color: #10b981;"><i class="fa-solid fa-tree"></i></div>
+                    </div>
+                    <div class="stat-value" id="totalCount">0</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-head">
+                        <span class="stat-label">SIRAM HARI INI</span>
+                        <div class="stat-icon" style="background: #eff6ff; color: #3b82f6;"><i class="fa-solid fa-droplet"></i></div>
+                    </div>
+                    <div class="stat-value" id="waterCount">0</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-head">
+                        <span class="stat-label">PUPUK HARI INI</span>
+                        <div class="stat-icon" style="background: #fffbeb; color: #f59e0b;"><i class="fa-solid fa-flask"></i></div>
+                    </div>
+                    <div class="stat-value" id="fertCount">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3>Sebaran Ekosistem</h3>
+                    <button class="btn btn-secondary btn-sm" onclick="app.switchTab('garden')">Lihat Detail</button>
+                </div>
+                <div style="height: 250px;">
+                    <canvas id="plantChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="garden" class="view-section" style="display:none;">
+            <div class="header-row">
+                <div class="header-title">
+                    <h1>Koleksi Tanaman</h1>
+                    <p>Kelola jadwal perawatan berbasis hari mingguan.</p>
+                </div>
+            </div>
+            
+            <div class="action-bar">
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Cari tanaman..." id="plantSearch" onkeyup="app.renderGrid()">
+                </div>
+                <select class="search-input" style="width: auto; flex: 0 0 auto;" id="sortSelect" onchange="app.renderGrid()">
+                    <option value="urgency">Urutkan: Jadwal Terdekat</option>
+                    <option value="az">Urutkan: A-Z</option>
+                    <option value="newest">Urutkan: Terbaru</option>
+                </select>
+                <button class="btn btn-primary" onclick="app.openFormModal()">
+                    <i class="fa-solid fa-plus"></i> <span>Tambah Baru</span>
+                </button>
+            </div>
+
+            <div class="plant-grid" id="plantGrid"></div>
+        </section>
+
+        <section id="settings" class="view-section" style="display:none;">
+            <div class="header-row">
+                <div class="header-title">
+                    <h1>Pengaturan</h1>
+                </div>
+            </div>
+            
+            <div class="card" style="max-width: 600px;">
+                <h3 style="margin-bottom: 1rem;">Manajemen Data</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+                    Ekspor data Anda secara berkala dalam format JSON agar aman, atau unduh laporan CSV untuk Excel.
+                </p>
+                
+                <div style="display:flex; gap:10px; margin-bottom: 20px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="app.exportData()">
+                        <i class="fa-solid fa-download"></i> Backup JSON
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.exportCSV()">
+                        <i class="fa-solid fa-file-csv"></i> Laporan Excel
+                    </button>
+                    <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">
+                        <i class="fa-solid fa-upload"></i> Restore
+                    </button>
+                    <input type="file" id="importFile" style="display:none" onchange="app.importData(this)">
+                </div>
+
+                <div style="padding:15px; background:var(--bg-body); border-radius:8px; font-size:0.9rem;">
+                    <i class="fa-solid fa-database" style="color:var(--primary)"></i> 
+                    Storage terpakai: <span id="storageUsed">0</span> KB
+                </div>
+
+                <div style="margin-top:20px; border-top: 1px solid var(--border); padding-top:20px;">
+                    <h3 style="margin-bottom: 1rem;">Notifikasi</h3>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size:0.9rem;">
+                        Aktifkan notifikasi browser untuk mendapatkan pengingat penyiraman sesuai hari.
+                    </p>
+                    <button class="btn btn-secondary" onclick="app.requestNotification()">
+                        <i class="fa-solid fa-bell"></i> Minta Izin Notifikasi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-box">
+            <div style="padding: 2rem;">
+                <h2 style="margin-bottom: 0.5rem;" id="formTitle">Tambah Tanaman</h2>
+                
+                <form id="plantForm">
+                    <input type="hidden" id="pId">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nama Tanaman</label>
+                        <input type="text" id="pName" class="search-input" placeholder="Contoh: Cabai, Monstera" required onkeyup="app.checkPresets(this.value)">
+                        <div id="presetHint" class="smart-suggestion" onclick="app.applyPreset()">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Jadwal otomatis tersedia! Klik untuk isi.
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="form-group">
+                            <label class="form-label">Kategori</label>
+                            <select id="pType" class="search-input">
+                                <option value="Sayur">Sayur</option>
+                                <option value="Bunga">Bunga</option>
+                                <option value="Buah">Buah</option>
+                                <option value="Hias">Hias</option>
+                                <option value="Herbal">Herbal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tgl Tanam</label>
+                            <input type="date" id="pDate" class="search-input" required>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--bg-body); padding: 1rem; border-radius: var(--radius-md); border: 1px dashed var(--primary); margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom:0.5rem;">
+                            <label class="form-label" style="color:var(--primary);"><i class="fa-solid fa-droplet"></i> Jadwal Siram Mingguan</label>
+                            <div class="day-selector-container" id="waterDayContainer">
+                                <div class="day-check" data-day="1" onclick="app.toggleDay(this, 'water')">Sen</div>
+                                <div class="day-check" data-day="2" onclick="app.toggleDay(this, 'water')">Sel</div>
+                                <div class="day-check" data-day="3" onclick="app.toggleDay(this, 'water')">Rab</div>
+                                <div class="day-check" data-day="4" onclick="app.toggleDay(this, 'water')">Kam</div>
+                                <div class="day-check" data-day="5" onclick="app.toggleDay(this, 'water')">Jum</div>
+                                <div class="day-check" data-day="6" onclick="app.toggleDay(this, 'water')">Sab</div>
+                                <div class="day-check" data-day="0" onclick="app.toggleDay(this, 'water')">Min</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fffbeb; padding: 1rem; border-radius: var(--radius-md); border: 1px dashed #f59e0b; margin-bottom: 1.2rem;">
+                        <div class="form-group" style="margin-bottom:0.5rem;">
+                            <label class="form-label" style="color:#b45309;"><i class="fa-solid fa-flask"></i> Jadwal Pupuk Mingguan</label>
+                            <div class="day-selector-container" id="fertDayContainer">
+                                <div class="day-check" data-day="1" onclick="app.toggleDay(this, 'fert')">Sen</div>
+                                <div class="day-check" data-day="2" onclick="app.toggleDay(this, 'fert')">Sel</div>
+                                <div class="day-check" data-day="3" onclick="app.toggleDay(this, 'fert')">Rab</div>
+                                <div class="day-check" data-day="4" onclick="app.toggleDay(this, 'fert')">Kam</div>
+                                <div class="day-check" data-day="5" onclick="app.toggleDay(this, 'fert')">Jum</div>
+                                <div class="day-check" data-day="6" onclick="app.toggleDay(this, 'fert')">Sab</div>
+                                <div class="day-check" data-day="0" onclick="app.toggleDay(this, 'fert')">Min</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Foto</label>
+                        <input type="file" id="pImageInput" accept="image/*" class="search-input">
+                        <div id="imgPreviewBox" class="img-preview-container">
+                            <img id="imgPreviewTag" src="">
+                        </div>
+                        <small style="color:var(--text-muted); font-size:0.8rem; margin-top:5px; display:block;">
+                            *Kosongkan jika ingin gambar otomatis.
+                        </small>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="app.closeModal('formModal')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="flex:1;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-box" style="max-width: 600px;">
+            <div style="position: relative;">
+                <div style="height: 250px; width: 100%;">
+                    <img id="dImage" src="" style="width:100%; height:100%; object-fit: cover;">
+                    <div style="position: absolute; inset:0; background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8));"></div>
+                </div>
+                <button onclick="app.closeModal('detailModal')" style="position:absolute; top:15px; right:15px; background:rgba(255,255,255,0.9); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">
+                    <i class="fa-solid fa-times" style="color:#0f172a"></i>
+                </button>
+                <button onclick="app.openEditForm()" style="position:absolute; top:15px; right:60px; background:rgba(255,255,255,0.9); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10;">
+                    <i class="fa-solid fa-pencil" style="color:#0f172a"></i>
+                </button>
+
+                <div style="position:absolute; bottom:20px; left:20px; color:white;">
+                    <span id="dType" class="badge" style="background:white; color:var(--primary); margin-bottom:5px;">Tipe</span>
+                    <h2 id="dName" style="margin:0; font-size:1.8rem;">Nama Tanaman</h2>
+                    <p id="dScheduleInfo" style="font-size:0.85rem; opacity:0.9; margin-top:4px;">Jadwal Siram: -</p>
+                    <p id="dFertInfo" style="font-size:0.85rem; opacity:0.9;">Jadwal Pupuk: -</p>
+                </div>
+            </div>
+
+            <div style="padding: 1.5rem;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary" onclick="app.handleAction('siram')">
+                        <i class="fa-solid fa-droplet"></i> Siram
+                    </button>
+                    <button class="btn btn-secondary" onclick="app.handleAction('pupuk')">
+                        <i class="fa-solid fa-flask"></i> Pupuk
+                    </button>
+                    <button class="btn btn-secondary" style="border-color:#f97316; color:#f97316;" onclick="app.logHarvest()">
+                        <i class="fa-solid fa-basket-shopping"></i> Panen
+                    </button>
+                    <button class="btn btn-danger" onclick="app.deletePlant()">
+                        <i class="fa-solid fa-trash"></i> Hapus
+                    </button>
+                </div>
+
+                <h4 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 8px;">Riwayat Aktivitas</h4>
+                <div id="dTimeline" style="max-height: 200px; overflow-y: auto;">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-check-circle" style="color:#4ade80"></i>
+        <span id="toastMsg">Berhasil!</span>
+    </div>
+
+    <script>
+        /**
+         * SMARTGARDEN PRO v3.1 (Update: Jam di Log & Jadwal Pupuk Mingguan)
+         */
+        
+        // Update Knowledge dengan data jadwal (0=Min, 1=Sen, ... 6=Sab)
+        // Fert sekarang menggunakan Array [Hari]
+        const PLANT_KNOWLEDGE = {
+            'cabai': { type: 'Sayur', schedule: [1,3,5], fert: [1], img: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?auto=format&fit=crop&w=600&q=80' },
+            'tomat': { type: 'Sayur', schedule: [1,4], fert: [1], img: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=600&q=80' },
+            'selada': { type: 'Sayur', schedule: [1,3,5], fert: [1], img: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?auto=format&fit=crop&w=600&q=80' },
+            'kangkung': { type: 'Sayur', schedule: [1,2,3,4,5,6,0], fert: [1], img: 'https://images.unsplash.com/photo-1662318183265-5bbe6578d1b0?auto=format&fit=crop&w=600&q=80' },
+            'monstera': { type: 'Hias', schedule: [1], fert: [1], img: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=600&q=80' },
+            'kaktus': { type: 'Hias', schedule: [6], fert: [6], img: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=600&q=80' },
+            'anggrek': { type: 'Bunga', schedule: [2,5], fert: [2], img: 'https://images.unsplash.com/photo-1566634568864-159518a224f1?auto=format&fit=crop&w=600&q=80' },
+            'mawar': { type: 'Bunga', schedule: [1,4], fert: [1], img: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?auto=format&fit=crop&w=600&q=80' },
+            'mint': { type: 'Herbal', schedule: [1,3,5], fert: [1], img: 'https://images.unsplash.com/photo-1626468452146-560416997429?auto=format&fit=crop&w=600&q=80' },
+            'jahe': { type: 'Herbal', schedule: [2,5], fert: [2], img: 'https://images.unsplash.com/photo-1635398656643-27c7d4281788?auto=format&fit=crop&w=600&q=80' }
+        };
+
+        const DEFAULT_IMG = 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=600&q=80';
+        const DAYS_MAP = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+        const app = {
+            data: [],
+            currentId: null,
+            editingId: null, 
+            chart: null,
+            activePreset: null,
+
+            init() {
+                // Migration logic:
+                let rawData = JSON.parse(localStorage.getItem('sg_pro_data')) || [];
+                this.data = rawData.map(p => {
+                    // Fix Water Schedule
+                    if (!p.waterSchedule) {
+                        p.waterSchedule = [1, 4]; 
+                        delete p.waterFreq;
+                    }
+                    // Fix Fertilizer Schedule (Dari Freq (int) ke Schedule (array))
+                    if (!p.fertSchedule) {
+                        // Default fallback: Senin saja
+                        p.fertSchedule = [1];
+                        // Jika ada data lama fertFreq, kita biarkan saja sebagai legacy atau hapus
+                    }
+                    return p;
+                });
+
+                // Theme
+                const theme = localStorage.getItem('sg_theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                this.startClock();
+                this.updateStorageInfo();
+                this.updateUI();
+                this.fetchWeather();
+                this.requestNotification();
+                this.checkReminders();
+
+                setInterval(() => { this.checkReminders(); }, 3600000); 
+            },
+
+            save() {
+                localStorage.setItem('sg_pro_data', JSON.stringify(this.data));
+                this.updateUI();
+                this.updateStorageInfo();
+            },
+            
+            startClock() {
+                const updateTime = () => {
+                    const now = new Date();
+                    document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('id-ID', { hour12: false });
+                    
+                    const hours = now.getHours();
+                    let greet = hours < 11 ? "Selamat Pagi" : hours < 15 ? "Selamat Siang" : hours < 18 ? "Selamat Sore" : "Selamat Malam";
+                    document.getElementById('greeting').innerText = `${greet}, MADNN`;
+                    document.getElementById('dateDisplay').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                };
+                updateTime();
+                setInterval(updateTime, 1000);
+            },
+            
+            updateStorageInfo() {
+                const str = JSON.stringify(this.data);
+                document.getElementById('storageUsed').innerText = (str.length / 1024).toFixed(2);
+            },
+
+            updateUI() {
+                this.renderDashboard();
+                this.renderGrid();
+            },
+
+            // --- LOGIC: NEXT SCHEDULE GENERIC ---
+            // Mencari tanggal berikutnya berdasarkan jadwal hari
+            getNextDate(scheduleArr, lastDateStr) {
+                if(!scheduleArr || scheduleArr.length === 0) return new Date(); // Fallback
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const currentDay = today.getDay(); // 0-6
+                const schedule = scheduleArr.sort((a,b) => a-b);
+                
+                // Cek apakah hari ini jadwalnya?
+                if (schedule.includes(currentDay)) {
+                    // Cek apakah sudah dilakukan hari ini
+                    const lastAction = new Date(lastDateStr).setHours(0,0,0,0);
+                    if (lastAction < today.getTime()) {
+                        return today; // Harus dilakukan hari ini
+                    }
+                }
+
+                // Cari hari berikutnya di minggu ini
+                let nextDay = schedule.find(d => d > currentDay);
+                
+                // Jika tidak ada sisa minggu ini, ambil hari pertama minggu depan
+                if (nextDay === undefined) {
+                    nextDay = schedule[0];
+                }
+
+                let daysUntil = (nextDay + 7 - currentDay) % 7;
+                if (daysUntil === 0) daysUntil = 7; // Jika loop balik ke hari yang sama minggu depan
+
+                const nextDate = new Date(today);
+                nextDate.setDate(today.getDate() + daysUntil);
+                return nextDate;
+            },
+
+            // --- DASHBOARD ---
+            renderDashboard() {
+                document.getElementById('totalCount').innerText = this.data.length;
+                
+                const today = new Date().setHours(0,0,0,0);
+                let waterNeeded = 0;
+                let fertNeeded = 0;
+                let totalHarvest = 0; // Ubah ke 0 dari previous undefined
+                const typeCounts = {};
+
+                this.data.forEach(p => {
+                    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
+                    
+                    // Logic Jadwal Air
+                    const nextWater = this.getNextDate(p.waterSchedule, p.lastWater);
+                    if (nextWater.getTime() <= today) waterNeeded++;
+
+                    // Logic Jadwal Pupuk
+                    const nextFert = this.getNextDate(p.fertSchedule, p.lastFert);
+                    if (nextFert.getTime() <= today) fertNeeded++;
+
+                    if(p.logs) {
+                        p.logs.forEach(l => {
+                            if(l.type === 'harvest' && l.amount) totalHarvest += parseFloat(l.amount);
+                        });
+                    }
+                });
+
+                document.getElementById('waterCount').innerText = waterNeeded;
+                document.getElementById('fertCount').innerText = fertNeeded;
+                // Tidak ada elemen harvestCount di card atas lagi di HTML baru (diganti Fert), 
+                // tapi logic biarkan saja jika ingin dikembalikan.
+
+                // Chart
+                const ctx = document.getElementById('plantChart').getContext('2d');
+                if(this.chart) this.chart.destroy();
+                
+                const labels = Object.keys(typeCounts);
+                const values = Object.values(typeCounts);
+                const colors = ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'];
+
+                this.chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels.length ? labels : ['Kosong'],
+                        datasets: [{
+                            data: values.length ? values : [1],
+                            backgroundColor: labels.length ? colors : ['#e2e8f0'],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true } }
+                        }
+                    }
+                });
+            },
+
+            // --- GRID & SORT ---
+            renderGrid() {
+                const container = document.getElementById('plantGrid');
+                const filter = document.getElementById('plantSearch').value || '';
+                const sortMode = document.getElementById('sortSelect').value || 'urgency';
+                container.innerHTML = '';
+                
+                let filtered = this.data.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+                
+                filtered.sort((a, b) => {
+                    const nextA = this.getNextDate(a.waterSchedule, a.lastWater).getTime();
+                    const nextB = this.getNextDate(b.waterSchedule, b.lastWater).getTime();
+
+                    if (sortMode === 'urgency') return nextA - nextB;
+                    if (sortMode === 'az') return a.name.localeCompare(b.name);
+                    if (sortMode === 'newest') return b.id - a.id;
+                    return 0;
+                });
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column:1/-1; text-align:center; padding:3rem; opacity:0.5;">
+                            <i class="fa-solid fa-leaf" style="font-size:3rem; margin-bottom:1rem;"></i>
+                            <p>Data tidak ditemukan.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                filtered.forEach(p => {
+                    const today = new Date().setHours(0,0,0,0);
+                    const nextWaterDate = this.getNextDate(p.waterSchedule, p.lastWater);
+                    const diffTime = nextWaterDate.getTime() - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    
+                    // Logic tampilan status
+                    let statusClass = '';
+                    let statusText = '';
+                    let icon = 'fa-droplet';
+
+                    if (diffDays <= 0) {
+                        statusClass = 'urgent';
+                        statusText = 'Siram Hari Ini!';
+                        icon = 'fa-triangle-exclamation';
+                    } else if (diffDays === 1) {
+                        statusClass = 'today';
+                        statusText = 'Siram Besok';
+                    } else {
+                        statusText = `Siram: ${DAYS_MAP[nextWaterDate.getDay()]}`; 
+                    }
+                    
+                    const img = p.image || DEFAULT_IMG;
+                    
+                    const html = `
+                        <div class="plant-card" onclick="app.openDetail(${p.id})">
+                            <div class="plant-img-wrapper">
+                                <img src="${img}" class="plant-img" loading="lazy">
+                            </div>
+                            <div class="card-body">
+                                <span class="badge" style="background:var(--primary-light); color:var(--primary)">${p.type}</span>
+                                <h3 style="font-size:1.1rem; margin-bottom:5px; color:var(--text-main)">${p.name}</h3>
+                                <div class="status-pill ${statusClass}">
+                                    <i class="fa-solid ${icon}"></i>
+                                    ${statusText}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            },
+
+            // --- FORM ACTIONS (DAY SELECTOR) ---
+            toggleDay(el, type) {
+                // Type bisa 'water' atau 'fert'
+                if (type === 'fert') {
+                    el.classList.toggle('fert-active');
+                } else {
+                    el.classList.toggle('active');
+                }
+            },
+
+            getSelectedDays(containerId, activeClass) {
+                const container = document.getElementById(containerId);
+                const actives = container.querySelectorAll(`.${activeClass}`);
+                return Array.from(actives).map(el => parseInt(el.getAttribute('data-day')));
+            },
+
+            setDays(daysArray, containerId, activeClass) {
+                const container = document.getElementById(containerId);
+                // Clear all
+                container.querySelectorAll('.day-check').forEach(el => el.classList.remove(activeClass));
+                // Set active
+                if(daysArray) {
+                    daysArray.forEach(d => {
+                        const el = container.querySelector(`.day-check[data-day="${d}"]`);
+                        if(el) el.classList.add(activeClass);
+                    });
+                }
+            },
+
+            // --- DETAIL & EDIT ---
+            openDetail(id) {
+                const p = this.data.find(x => x.id === id);
+                if(!p) return;
+                this.currentId = id;
+
+                document.getElementById('dName').innerText = p.name;
+                document.getElementById('dType').innerText = p.type;
+                document.getElementById('dImage').src = p.image || DEFAULT_IMG;
+                
+                // Show Schedule readable
+                const waterNames = p.waterSchedule.sort().map(d => DAYS_MAP[d]).join(', ');
+                document.getElementById('dScheduleInfo').innerText = `Jadwal Siram: ${waterNames}`;
+
+                const fertNames = (p.fertSchedule || []).sort().map(d => DAYS_MAP[d]).join(', ');
+                document.getElementById('dFertInfo').innerText = `Jadwal Pupuk: ${fertNames}`;
+
+                this.renderTimeline(p);
+                this.openModal('detailModal');
+            },
+
+            openFormModal() {
+                document.getElementById('formTitle').innerText = "Tambah Tanaman";
+                document.getElementById('plantForm').reset();
+                document.getElementById('pId').value = "";
+                this.editingId = null;
+                document.getElementById('imgPreviewBox').style.display = 'none';
+                
+                // Reset Day Selector
+                this.setDays([], 'waterDayContainer', 'active'); 
+                this.setDays([], 'fertDayContainer', 'fert-active'); 
+                
+                this.openModal('formModal');
+            },
+
+            openEditForm() {
+                const p = this.data.find(x => x.id === this.currentId);
+                if(!p) return;
+
+                this.editingId = p.id;
+                document.getElementById('formTitle').innerText = "Edit Tanaman";
+                document.getElementById('pId').value = p.id;
+                document.getElementById('pName').value = p.name;
+                document.getElementById('pType').value = p.type;
+                document.getElementById('pDate').value = p.date;
+                // Fert Freq removed from input, using schedule now
+
+                // Set Days
+                this.setDays(p.waterSchedule || [], 'waterDayContainer', 'active');
+                this.setDays(p.fertSchedule || [], 'fertDayContainer', 'fert-active');
+
+                if (p.image) {
+                    document.getElementById('imgPreviewBox').style.display = 'block';
+                    document.getElementById('imgPreviewTag').src = p.image;
+                } else {
+                    document.getElementById('imgPreviewBox').style.display = 'none';
+                }
+
+                this.closeModal('detailModal');
+                this.openModal('formModal');
+            },
+
+            renderTimeline(p) {
+                const tl = document.getElementById('dTimeline');
+                tl.innerHTML = '';
+                const sortedLogs = [...p.logs].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                sortedLogs.forEach(l => {
+                    // FITUR BARU: JAM & MENIT
+                    const dateObj = new Date(l.date);
+                    const d = dateObj.toLocaleDateString('id-ID', {day:'numeric', month:'short'});
+                    const t = dateObj.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                    
+                    const icon = l.type === 'siram' ? 'fa-droplet' : l.type === 'pupuk' ? 'fa-flask' : l.type === 'harvest' ? 'fa-basket-shopping' : 'fa-seedling';
+                    const color = l.type === 'harvest' ? '#f97316' : l.type === 'pupuk' ? '#f59e0b' : 'var(--primary)';
+                    
+                    tl.innerHTML += `
+                        <div style="display:flex; gap:15px; margin-bottom:15px; align-items:start;">
+                            <div style="min-width:60px; text-align:right; padding-top:2px;">
+                                <div style="font-size:0.85rem; font-weight:700; color:var(--text-main);">${d}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">${t}</div>
+                            </div>
+                            <div style="flex:1; border-left: 2px solid ${color}; padding-left:12px;">
+                                <div style="font-weight:600; font-size:0.95rem; color:${color}">
+                                    <i class="fa-solid ${icon}" style="margin-right:5px;"></i> ${l.action}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            },
+
+            handleAction(type) {
+                const idx = this.data.findIndex(p => p.id === this.currentId);
+                const now = new Date();
+                
+                if(type === 'siram') this.data[idx].lastWater = now.toISOString();
+                if(type === 'pupuk') this.data[idx].lastFert = now.toISOString();
+
+                const actionText = type === 'siram' ? 'Disiram' : 'Diberi Pupuk';
+                this.data[idx].logs.push({ date: now.toISOString(), type, action: actionText });
+                
+                this.save();
+                this.renderTimeline(this.data[idx]);
+                this.showToast(`${actionText} berhasil!`);
+                
+                // Refresh dashboard to update counts
+                this.renderDashboard();
+            },
+
+            logHarvest() {
+                const amount = prompt("Berapa kg hasil panen?");
+                if(amount) {
+                    const idx = this.data.findIndex(p => p.id === this.currentId);
+                    this.data[idx].logs.push({ 
+                        date: new Date().toISOString(), 
+                        type: 'harvest', 
+                        action: `Panen ${amount}kg`,
+                        amount: parseFloat(amount)
+                    });
+                    this.save();
+                    this.renderTimeline(this.data[idx]);
+                    this.showToast("Panen tercatat!");
+                }
+            },
+
+            deletePlant() {
+                if(confirm("Hapus permanen?")) {
+                    this.data = this.data.filter(p => p.id !== this.currentId);
+                    this.save();
+                    this.closeModal('detailModal');
+                    this.showToast("Tanaman dihapus");
+                }
+            },
+
+            // --- SMART LOGIC ---
+            checkPresets(val) {
+                if (this.editingId) return;
+                const hint = document.getElementById('presetHint');
+                const lower = val.toLowerCase();
+                const matchKey = Object.keys(PLANT_KNOWLEDGE).find(k => lower.includes(k));
+                
+                if(matchKey) {
+                    this.activePreset = PLANT_KNOWLEDGE[matchKey];
+                    hint.style.display = 'flex';
+                } else {
+                    hint.style.display = 'none';
+                    this.activePreset = null;
+                }
+            },
+
+            applyPreset() {
+                if(this.activePreset) {
+                    document.getElementById('pType').value = this.activePreset.type;
+                    
+                    // Apply Schedule Days (Water)
+                    this.setDays(this.activePreset.schedule, 'waterDayContainer', 'active');
+                    // Apply Schedule Days (Fert)
+                    this.setDays(this.activePreset.fert, 'fertDayContainer', 'fert-active');
+                    
+                    document.getElementById('presetHint').style.display = 'none';
+                    this.showToast("Jadwal otomatis terisi!");
+                }
+            },
+
+            getAutoImage(name) {
+                const lower = name.toLowerCase();
+                const matchKey = Object.keys(PLANT_KNOWLEDGE).find(k => lower.includes(k));
+                if(matchKey) return PLANT_KNOWLEDGE[matchKey].img;
+                return DEFAULT_IMG;
+            },
+
+            // --- UTILS & OTHERS ---
+            fetchWeather() {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        try {
+                            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&forecast_days=1`);
+                            const data = await res.json();
+                            const temp = Math.round(data.current_weather.temperature);
+                            const code = data.current_weather.weathercode;
+                            
+                            document.getElementById('weatherTemp').innerText = `${temp}°C`;
+                            let desc = "Cerah"; let icon = "fa-sun"; let isRain = false;
+                            if(code >= 1 && code <= 3) { desc = "Berawan"; icon = "fa-cloud"; }
+                            if(code >= 51) { desc = "Hujan"; icon = "fa-cloud-showers-heavy"; isRain = true; }
+                            
+                            document.getElementById('weatherDesc').innerText = `${desc} • Lokasi Terdeteksi`;
+                            document.querySelector('.weather-icon i').className = `fa-solid ${icon}`;
+                            document.getElementById('rainDelayBtn').style.display = isRain ? 'inline-flex' : 'none';
+                        } catch (err) {}
+                    });
+                }
+            },
+
+            applyRainDelay() {
+                if(confirm("Tandai semua jadwal SIRAM hari ini sebagai 'Sudah Disiram' karena hujan?")) {
+                    const today = new Date().setHours(0,0,0,0);
+                    let count = 0;
+                    this.data.forEach(p => {
+                        const nextDate = this.getNextDate(p.waterSchedule, p.lastWater);
+                        if(nextDate.getTime() <= today) {
+                            p.lastWater = new Date().toISOString();
+                            p.logs.push({ date: new Date().toISOString(), type: 'siram', action: 'Dilewati (Hujan)' });
+                            count++;
+                        }
+                    });
+                    this.save();
+                    this.showToast(`${count} tanaman diperbarui.`);
+                }
+            },
+            
+            // --- NOTIFICATIONS ---
+            requestNotification() {
+                if ("Notification" in window && Notification.permission !== "denied" && Notification.permission !== "granted") {
+                     Notification.requestPermission();
+                }
+            },
+
+            checkReminders() {
+                if (Notification.permission !== "granted") return;
+                const today = new Date().setHours(0,0,0,0);
+                const thirstyPlants = this.data.filter(p => {
+                    const nextDate = this.getNextDate(p.waterSchedule, p.lastWater);
+                    return nextDate.getTime() <= today;
+                });
+                
+                if (thirstyPlants.length > 0) {
+                    new Notification("SmartGarden Reminder", {
+                        body: `Ada ${thirstyPlants.length} tanaman di jadwal siram hari ini!`,
+                        icon: "https://cdn-icons-png.flaticon.com/512/628/628283.png"
+                    });
+                }
+            },
+
+            // --- EXPORT / IMPORT ---
+            exportData() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data));
+                const a = document.createElement('a');
+                a.href = dataStr;
+                a.download = `smartgarden_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+            },
+
+            exportCSV() { 
+                let csv = "Nama Tanaman,Tipe,Jadwal Siram,Jadwal Pupuk,Tgl Aktivitas,Jam,Jenis Aktivitas,Keterangan\n";
+                this.data.forEach(p => {
+                    const wSched = p.waterSchedule.map(d => DAYS_MAP[d]).join('/');
+                    const fSched = (p.fertSchedule||[]).map(d => DAYS_MAP[d]).join('/');
+                    p.logs.forEach(l => {
+                        const dObj = new Date(l.date);
+                        csv += `"${p.name}","${p.type}","${wSched}","${fSched}","${dObj.toLocaleDateString()}","${dObj.toLocaleTimeString()}","${l.type}","${l.action}"\n`;
+                    });
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `smartgarden_report.csv`;
+                a.click();
+            },
+
+            importData(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        this.data = JSON.parse(e.target.result);
+                        this.save();
+                        this.showToast("Restore berhasil!");
+                    } catch(err) { alert("File rusak!"); }
+                };
+                reader.readAsText(file);
+            },
+
+            // --- BASE UTILS ---
+            switchTab(id) {
+                document.querySelectorAll('.view-section').forEach(e => e.style.display = 'none');
+                document.getElementById(id).style.display = 'block';
+                document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
+                const navIdx = id === 'dashboard' ? 0 : id === 'garden' ? 1 : 2;
+                document.querySelectorAll('.nav-link')[navIdx].classList.add('active');
+            },
+            openModal(id) { document.getElementById(id).classList.add('active'); },
+            closeModal(id) { document.getElementById(id).classList.remove('active'); },
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('sg_theme', next);
+            },
+            showToast(msg) {
+                const t = document.getElementById('toast');
+                document.getElementById('toastMsg').innerText = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            },
+            async compressImage(file) {
+                return new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = e => {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const maxW = 500;
+                            const scale = maxW / img.width;
+                            canvas.width = maxW;
+                            canvas.height = img.height * scale;
+                            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        }
+                    }
+                });
+            }
+        };
+
+        // --- EVENTS ---
+        document.getElementById('pImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = evt => {
+                    document.getElementById('imgPreviewBox').style.display = 'block';
+                    document.getElementById('imgPreviewTag').src = evt.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('plantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "Menyimpan..."; btn.disabled = true;
+
+            try {
+                const name = document.getElementById('pName').value;
+                const file = document.getElementById('pImageInput').files[0];
+                const editingId = document.getElementById('pId').value;
+                
+                const waterSchedule = app.getSelectedDays('waterDayContainer', 'active');
+                const fertSchedule = app.getSelectedDays('fertDayContainer', 'fert-active');
+
+                if (waterSchedule.length === 0) {
+                    alert("Pilih minimal 1 hari penyiraman!");
+                    btn.innerText = "Simpan"; btn.disabled = false;
+                    return;
+                }
+                // Fert schedule boleh kosong (opsional), tapi sebaiknya diisi
+                
+                let imgBase64 = null;
+                if(file) imgBase64 = await app.compressImage(file);
+                else if (!editingId) imgBase64 = app.getAutoImage(name);
+
+                if (editingId) {
+                    const idx = app.data.findIndex(p => p.id == editingId);
+                    if (idx > -1) {
+                        app.data[idx].name = name;
+                        app.data[idx].type = document.getElementById('pType').value;
+                        app.data[idx].date = document.getElementById('pDate').value;
+                        app.data[idx].waterSchedule = waterSchedule;
+                        app.data[idx].fertSchedule = fertSchedule; // Update Fert
+                        if(imgBase64) app.data[idx].image = imgBase64;
+                    }
+                    app.showToast("Data diperbarui!");
+                } else {
+                    const newPlant = {
+                        id: Date.now(),
+                        name: name,
+                        type: document.getElementById('pType').value,
+                        date: document.getElementById('pDate').value,
+                        waterSchedule: waterSchedule,
+                        fertSchedule: fertSchedule, // Save Fert
+                        lastWater: document.getElementById('pDate').value,
+                        lastFert: document.getElementById('pDate').value,
+                        image: imgBase64,
+                        logs: [{ date: new Date().toISOString(), type: 'init', action: 'Ditanam' }]
+                    };
+                    app.data.unshift(newPlant);
+                    app.showToast("Tanaman ditambahkan!");
+                }
+
+                app.save();
+                app.closeModal('formModal');
+                e.target.reset();
+                app.switchTab('garden');
+            } catch (err) {
+                console.error(err);
+                alert("Gagal menyimpan.");
+            } finally {
+                btn.innerText = "Simpan"; btn.disabled = false;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+
+    </script>
+</body>
+</html>

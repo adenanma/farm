@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Grow | Dashboard Nutrisi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            /* Palette: Modern Emerald & Slate */
+            --primary-600: #059669;
+            --primary-500: #10b981;
+            --primary-100: #d1fae5;
+            --primary-50: #ecfdf5;
+            
+            --slate-900: #0f172a;
+            --slate-800: #1e293b;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+            --white: #ffffff;
+
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --warning-bg: #fffbeb;
+
+            /* Theming Mapping */
+            --bg-app: var(--slate-50);
+            --bg-card: var(--white);
+            --text-heading: var(--slate-900);
+            --text-body: var(--slate-500);
+            --border-color: var(--slate-200);
+            
+            /* Modern UI Elements */
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-float: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-app: #0B1120; /* Deepest Navy */
+            --bg-card: #151e32; /* Lighter Navy */
+            --text-heading: #f8fafc;
+            --text-body: #94a3b8;
+            --border-color: #293548;
+            --shadow-float: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --slate-50: #0f172a; /* Override for table hover */
+        }
+
+        /* --- RESET & BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-heading);
+            min-height: 100vh;
+            line-height: 1.5;
+            transition: var(--transition);
+            background-image: radial-gradient(circle at top right, rgba(16, 185, 129, 0.05), transparent 40%);
+        }
+
+        /* --- LAYOUT GRID --- */
+        .app-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            gap: 2rem;
+            /* Layout: Header -> Stats -> Main Content (Chart+Form) -> Table */
+        }
+
+        /* --- HEADER --- */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid transparent;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 16px -4px rgba(16, 185, 129, 0.3);
+        }
+
+        .brand-text h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-heading);
+        }
+        
+        .brand-text span {
+            font-size: 0.875rem;
+            color: var(--text-body);
+            font-weight: 500;
+        }
+
+        .theme-toggle {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-heading);
+            padding: 0.75rem 1.25rem;
+            border-radius: 99px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+            border-color: var(--primary-500);
+        }
+
+        /* --- STATS GRID (Hero Section) --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative gradient blob for stats */
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: var(--primary-500);
+            opacity: 0.05;
+            border-radius: 50%;
+            filter: blur(20px);
+        }
+
+        .stat-label {
+            color: var(--text-body);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            letter-spacing: -0.02em;
+        }
+
+        /* --- MAIN CONTENT GRID (Chart + Input) --- */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Chart takes more space */
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-float);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* --- INPUT FORM --- */
+        .input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-heading);
+            font-weight: 600;
+            font-size: 0.925rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            background: var(--bg-app);
+            border: 2px solid transparent;
+            border-radius: var(--radius-lg);
+            color: var(--text-heading);
+            font-size: 1rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            background: var(--bg-card);
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 4px var(--primary-50);
+        }
+        
+        [data-theme="dark"] .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .form-control.invalid {
+            border-color: var(--danger);
+            background-color: var(--danger-bg);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transition: var(--transition);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-text {
+            background: transparent;
+            color: var(--danger);
+            border: 1px dashed var(--border-color);
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            border-radius: var(--radius-lg);
+            margin-top: 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn-text:hover {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+        }
+        [data-theme="dark"] .btn-text:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* --- CHART --- */
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
+        /* --- TABLE --- */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: var(--bg-app);
+            color: var(--text-body);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            padding: 1.25rem;
+            text-align: left;
+        }
+
+        td {
+            padding: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-heading);
+            font-weight: 500;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-app);
+        }
+
+        /* Badges & Actions */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-success { background: var(--primary-100); color: var(--primary-600); }
+        .badge-warning { background: var(--danger-bg); color: var(--danger); }
+
+        [data-theme="dark"] .badge-success { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        [data-theme="dark"] .badge-warning { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-body);
+            cursor: pointer;
+            transition: var(--transition);
+            width: auto; /* Override default button width */
+            display: inline-block;
+        }
+
+        .btn-icon:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        /* --- ALERT --- */
+        #alertContainer {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+        }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow-float);
+            display: flex;
+            align-items: center;
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(10px);
+        }
+
+        .alert-success { background: var(--primary-600); color: white; }
+        .alert-warning { background: var(--warning); color: white; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .main-content { grid-template-columns: 1fr; }
+            .chart-wrapper { height: 300px; }
+        }
+
+        @media (max-width: 768px) {
+            .app-container { padding: 1rem; gap: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .header-bar { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .theme-toggle { width: 100%; justify-content: center; }
+            .stat-value { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="header-bar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="ri-plant-line">🌱</i>
+                </div>
+                <div class="brand-text">
+                    <h1>Smart Grow</h1>
+                    <span>Dashboard Monitoring Nutrisi</span>
+                </div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+                🌙 Mode Gelap
+            </button>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">pH Terakhir</div>
+                <div class="stat-value" id="latestPH">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">PPM Terakhir</div>
+                <div class="stat-value" id="latestPPM">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Rata-rata pH</div>
+                <div class="stat-value" id="avgPH">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Rata-rata PPM</div>
+                <div class="stat-value" id="avgPPM">-</div>
+            </div>
+        </section>
+
+        <section class="main-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📈 Tren Pertumbuhan</h2>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="nutritionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>📝 Input Data Baru</h2>
+                </div>
+                <div class="input-wrapper">
+                    <div class="form-group">
+                        <label for="ph">Derajat Keasaman (pH)</label>
+                        <input type="number" id="ph" step="0.1" min="0" max="14" class="form-control" placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="ppm">Kepekatan Nutrisi (PPM)</label>
+                        <input type="number" id="ppm" step="1" min="0" class="form-control" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Tanggal Check</label>
+                        <input type="date" id="date" class="form-control">
+                    </div>
+                    
+                    <button onclick="addData()" class="btn-primary">
+                        Simpan Data
+                    </button>
+                    
+                    <button class="btn-text" onclick="clearAllData()">
+                        🗑️ Reset Database
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>🗂️ Riwayat Pencatatan</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>pH Level</th>
+                            <th>PPM Level</th>
+                            <th>Status Kondisi</th>
+                            <th style="text-align: right;">Opsi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div id="alertContainer"></div>
+    </div>
+
+    <script>
+        let nutritionData = [];
+        let chart = null;
+
+        // Theme Toggle Logic
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('themeBtn');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.removeAttribute('data-theme');
+                btn.textContent = '🌙 Mode Gelap';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                btn.textContent = '☀️ Mode Terang';
+                localStorage.setItem('theme', 'dark');
+            }
+            updateChart(); // Redraw chart to match new theme colors
+        }
+
+        // Init Theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeBtn').textContent = '☀️ Mode Terang';
+        }
+
+        // Set Default Date
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Load data function
+        function loadData() {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('nutrition_')) {
+                    data[key] = localStorage.getItem(key);
+                }
+            }
+            
+            nutritionData = Object.keys(data)
+                .map(key => JSON.parse(data[key]))
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            updateDisplay();
+        }
+
+        function addData() {
+            const ph = parseFloat(document.getElementById('ph').value);
+            const ppm = parseFloat(document.getElementById('ppm').value);
+            const date = document.getElementById('date').value;
+
+            if (!ph || !ppm || !date) {
+                showAlert('Mohon lengkapi semua data!', 'warning');
+                return;
+            }
+
+            const dataPoint = {
+                id: Date.now(),
+                ph: ph,
+                ppm: ppm,
+                date: date
+            };
+
+            localStorage.setItem(`nutrition_${dataPoint.id}`, JSON.stringify(dataPoint));
+            
+            document.getElementById('ph').value = '';
+            document.getElementById('ppm').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+            
+            showAlert('Data berhasil disimpan', 'success');
+            loadData();
+        }
+
+        function deleteData(id) {
+            if (confirm('Hapus data ini?')) {
+                localStorage.removeItem(`nutrition_${id}`);
+                loadData();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('PERINGATAN: Ini akan menghapus seluruh riwayat data. Lanjutkan?')) {
+                const keys = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('nutrition_')) {
+                        keys.push(key);
+                    }
+                }
+                keys.forEach(key => localStorage.removeItem(key));
+                loadData();
+                showAlert('Database telah dibersihkan', 'success');
+            }
+        }
+
+        function updateDisplay() {
+            updateStats();
+            updateChart();
+            updateTable();
+        }
+
+        function updateStats() {
+            if (nutritionData.length === 0) {
+                ['latestPH', 'latestPPM', 'avgPH', 'avgPPM'].forEach(id => {
+                    document.getElementById(id).textContent = '-';
+                });
+                return;
+            }
+
+            const latest = nutritionData[nutritionData.length - 1];
+            const avgPH = (nutritionData.reduce((sum, d) => sum + d.ph, 0) / nutritionData.length).toFixed(1);
+            const avgPPM = Math.round(nutritionData.reduce((sum, d) => sum + d.ppm, 0) / nutritionData.length);
+
+            document.getElementById('latestPH').textContent = latest.ph.toFixed(1);
+            document.getElementById('latestPPM').textContent = latest.ppm;
+            document.getElementById('avgPH').textContent = avgPH;
+            document.getElementById('avgPPM').textContent = avgPPM;
+            
+            // Color logic for stats
+            const phEl = document.getElementById('latestPH');
+            if(latest.ph < 5.5 || latest.ph > 6.5) {
+                phEl.style.color = 'var(--danger)';
+            } else {
+                phEl.style.color = 'var(--primary)';
+            }
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('nutritionChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Detect Colors based on current Theme
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const primaryColor = isDark ? '#10b981' : '#059669';
+
+            const labels = nutritionData.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            });
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'pH',
+                        data: nutritionData.map(d => d.ph),
+                        borderColor: primaryColor,
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(5, 150, 105, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }, {
+                        label: 'PPM',
+                        data: nutritionData.map(d => d.ppm),
+                        borderColor: '#3b82f6', // Tetap biru agar kontras
+                        backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: textColor,
+                                font: { family: 'Inter', size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'transparent' },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'pH', color: textColor },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor },
+                            min: 4,
+                            max: 9
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'PPM', color: textColor },
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('dataTableBody');
+            
+            if (nutritionData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Belum ada data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = nutritionData.slice().reverse().map(d => {
+                const phWarning = d.ph < 5.5 || d.ph > 6.5; // Menggunakan rentang umum hidroponik
+                const badgeClass = phWarning ? 'badge-warning' : 'badge-success';
+                const statusText = phWarning ? 'Cek Nutrisi' : 'Normal';
+                
+                const date = new Date(d.date);
+                const formattedDate = date.toLocaleDateString('id-ID', { 
+                    day: '2-digit', month: 'short', year: 'numeric' 
+                });
+                
+                return `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td style="font-weight:600; color: ${phWarning ? 'var(--danger)' : 'var(--text-main)'}">${d.ph.toFixed(1)}</td>
+                        <td>${d.ppm}</td>
+                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                        <td style="text-align: right;">
+                            <button class="delete-btn-small" onclick="deleteData(${d.id})">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<span>${message}</span>`;
+            
+            container.appendChild(alert);
+
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            }, 3000);
+        }
+
+        // Input validation listener
+        document.getElementById('ph').addEventListener('input', function() {
+            const ph = parseFloat(this.value);
+            if (ph && (ph < 0 || ph > 14)) {
+                this.classList.add('invalid');
+            } else {
+                this.classList.remove('invalid');
+            }
+        });
+
+        // Initial Load
+        loadData();
+    </script>
+</body>
+</html>

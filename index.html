@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MADNN Agritech | Central Hub</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        /* --- 1. CORE VARIABLES --- */
+        :root {
+            /* Warna Identitas */
+            --primary: #059669;       /* Emerald Green */
+            --primary-dark: #047857;
+            --primary-light: #d1fae5;
+            
+            --secondary: #3b82f6;     /* Royal Blue */
+            --accent: #f59e0b;        /* Amber/Orange */
+            
+            /* Background & Surface */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            
+            /* Typography */
+            --text-main: #0f172a;     /* Slate 900 */
+            --text-muted: #64748b;    /* Slate 500 */
+            
+            /* Utilities */
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+            --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* --- 2. RESET & BASE --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Background pattern halus */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(5, 150, 105, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 50%);
+            padding: 20px; /* Padding dasar aman */
+        }
+
+        /* --- 3. LAYOUT CONTAINER --- */
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* --- 4. HEADER SECTION --- */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .brand-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        h1 {
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-main) 20%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 600px;
+        }
+
+        /* --- 5. GRID MENU --- */
+        .grid-menu {
+            display: grid;
+            gap: 1.5rem;
+            animation: fadeIn 1s ease-out;
+        }
+
+        /* --- 6. CARD COMPONENT --- */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: var(--transition);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        /* Hover Effect */
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary-light);
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .card p { font-size: 0.925rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 2rem; }
+
+        .card-action {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            gap: 6px;
+            margin-top: auto;
+        }
+        .card:hover .card-action i { transform: translateX(5px); }
+        .card-action i { transition: transform 0.3s ease; }
+
+        /* Card Themes */
+        .card.calc .icon-wrapper { background: #ecfdf5; color: var(--primary); }
+        .card.calc .card-action { color: var(--primary); }
+
+        .card.monitor .icon-wrapper { background: #eff6ff; color: var(--secondary); }
+        .card.monitor .card-action { color: var(--secondary); }
+
+        .card.journal .icon-wrapper { background: #fffbeb; color: var(--accent); }
+        .card.journal .card-action { color: var(--accent); }
+
+        /* --- 7. FOOTER --- */
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* =========================================
+           RESPONSIVE BREAKPOINTS (MEDIA QUERIES)
+           ========================================= */
+
+        /* 1. Sangat Kecil (Mobile) < 640px */
+        @media (max-width: 640px) {
+            body { padding: 16px; }
+            
+            .header { margin-bottom: 2rem; }
+            h1 { font-size: 1.75rem; } /* Font judul lebih kecil */
+            .subtitle { font-size: 0.9rem; }
+            
+            .grid-menu {
+                grid-template-columns: 1fr; /* 1 Kolom Vertikal */
+                gap: 1rem;
+            }
+
+            .card { padding: 1.5rem; } /* Padding kartu diperkecil hemat tempat */
+            .icon-wrapper { width: 48px; height: 48px; font-size: 1.5rem; margin-bottom: 1rem; }
+        }
+
+        /* 2. Kecil (Tablet/Mobile Besar) 641px - 991px */
+        @media (min-width: 641px) and (max-width: 991px) {
+            .container { max-width: 720px; }
+            
+            h1 { font-size: 2.25rem; }
+            
+            .grid-menu {
+                /* Grid 2 Kolom */
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+
+            /* Trik agar kartu ke-3 (Journal) memanjang penuh (span) agar rapi */
+            .card:last-child {
+                grid-column: span 2; 
+            }
+        }
+
+        /* 3. Medium (Laptop Kecil/Tablet Pro) 992px - 1199px */
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .container { max-width: 960px; }
+            
+            h1 { font-size: 2.5rem; }
+            
+            .grid-menu {
+                /* Grid 3 Kolom Sejajar */
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+            
+            .card { padding: 2rem; }
+        }
+
+        /* 4. Besar (Desktop) > 1200px */
+        @media (min-width: 1200px) {
+            .container { max-width: 1200px; } /* Membatasi lebar agar tidak terlalu melar */
+            
+            h1 { font-size: 3rem; }
+            .subtitle { font-size: 1.1rem; }
+            
+            .grid-menu {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 2.5rem; /* Gap lebih luas */
+            }
+
+            .card { 
+                padding: 2.5rem; 
+                min-height: 320px; /* Tinggi minimum agar terlihat gagah */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="container">
+        
+        <header class="header">
+            <div class="brand-pill">
+                <i class="ri-leaf-line"></i> MADNN Agritech
+            </div>
+            <h1>Hydroponics Ecosystem</h1>
+            <p class="subtitle">Gerbang utama menuju sistem manajemen pertanian modern Anda. Kelola nutrisi, monitoring data, dan jurnal harian dalam satu tempat.</p>
+        </header>
+
+        <nav class="grid-menu">
+            
+            <a href="index-ppm.html" class="card calc">
+                <div>
+                    <div class="icon-wrapper">
+                        <i class="ri-calculator-line"></i>
+                    </div>
+                    <h3>HydroCalc Pro</h3>
+                    <p>Hitung kalibrasi AB Mix dan dosis tandon otomatis untuk akurasi nutrisi maksimal.</p>
+                </div>
+                <div class="card-action">
+                    Buka Alat <i class="ri-arrow-right-line"></i>
+                </div>
+            </a>
+
+            <a href="index-nutrisi.html" class="card monitor">
+                <div>
+                    <div class="icon-wrapper">
+                        <i class="ri-dashboard-line"></i>
+                    </div>
+                    <h3>Smart Grow Monitor</h3>
+                    <p>Visualisasi grafik tren pH & PPM real-time dengan riwayat data lingkungan.</p>
+                </div>
+                <div class="card-action">
+                    Lihat Data <i class="ri-arrow-right-line"></i>
+                </div>
+            </a>
+
+            <a href="index-jurnal.html" class="card journal">
+                <div>
+                    <div class="icon-wrapper">
+                        <i class="ri-calendar-todo-line"></i>
+                    </div>
+                    <h3>Garden Journal</h3>
+                    <p>Jadwal penyiraman mingguan, pencatatan panen, dan manajemen inventaris tanaman.</p>
+                </div>
+                <div class="card-action">
+                    Kelola Kebun <i class="ri-arrow-right-line"></i>
+                </div>
+            </a>
+
+        </nav>
+
+        <footer>
+            &copy; 2026 MADNN Agritech Systems. Built for precision farming.
+        </footer>
+
+    </main>
+
+</body>
+</html>
