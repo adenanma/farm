@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SmartGarden MADNN + Clinic</title>
+    <title>SmartGarden MADNN Pro + Finance</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,6 +30,9 @@
             --danger: #ef4444;
             --danger-bg: #fef2f2;
             --danger-border: #fca5a5;
+            /* Finance Colors */
+            --money-in: #10b981;
+            --money-out: #f43f5e;
         }
 
         [data-theme="dark"] {
@@ -155,7 +158,7 @@
         .btn-danger:hover { background: #fecaca; }
         .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 
-        /* --- PLANT GRID STYLES (UPDATED FOR CLINIC) --- */
+        /* --- PLANT GRID STYLES --- */
         .plant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
 
         .plant-card {
@@ -165,7 +168,6 @@
         }
         .plant-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
         
-        /* STYLE KHUSUS TANAMAN SAKIT */
         .plant-card.is-sick {
             border: 2px solid var(--danger);
             background-color: var(--danger-bg);
@@ -193,15 +195,38 @@
         .status-pill.urgent { background: #fef2f2; color: #dc2626; border-color: #fecaca; animation: pulse 2s infinite; }
         .status-pill.today { background: #eff6ff; color: #3b82f6; border-color: #bfdbfe; }
 
-        /* CLINIC HEALTH BADGE */
         .health-badge {
             position: absolute; top: 10px; left: 10px; z-index: 10;
             padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.75rem;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .health-badge.sick { background: var(--danger); color: white; }
-        /* .health-badge.healthy { background: var(--primary); color: white; } - Opsional: jika ingin menampilkan sehat juga */
 
+        /* --- ADDITIONS FOR UPDATE --- */
+        .alert-banner {
+            background: var(--danger-bg); border: 1px solid var(--danger-border); color: var(--danger);
+            padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            animation: fadeIn 0.5s;
+        }
+        
+        .finance-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border-bottom: 1px solid var(--border); 
+            transition: 0.2s; border-radius: 8px; margin-bottom: 5px;
+        }
+        .finance-row:last-child { border-bottom: none; margin-bottom: 0; }
+        .finance-row:hover { background-color: var(--bg-body); transform: translateX(5px); }
+        .finance-actions { opacity: 0; transition: 0.2s; display: flex; gap: 8px; }
+        .finance-row:hover .finance-actions { opacity: 1; }
+        .amount-in { color: var(--money-in); font-weight: 700; }
+        .amount-out { color: var(--money-out); font-weight: 700; }
+
+        .chart-container-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;
+        }
+
+        /* Modal & Form Styles */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
             z-index: 100; display: none; place-items: center; opacity: 0; transition: 0.3s;
@@ -258,6 +283,7 @@
         }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
         .toast {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
@@ -277,6 +303,9 @@
         </div>
         <div class="nav-link" onclick="app.switchTab('garden')">
             <i class="fa-solid fa-seedling"></i> <span>Kebun Saya</span>
+        </div>
+        <div class="nav-link" onclick="app.switchTab('finance')">
+            <i class="fa-solid fa-wallet"></i> <span>Keuangan</span>
         </div>
         <div class="nav-link" onclick="app.switchTab('settings')">
             <i class="fa-solid fa-sliders"></i> <span>Pengaturan</span>
@@ -300,6 +329,8 @@
                     <div id="dateDisplay" class="date-display">Memuat...</div>
                 </div>
             </div>
+
+            <div id="sickAlertContainer"></div>
 
             <div class="weather-banner">
                 <div class="weather-info">
@@ -334,20 +365,76 @@
                 </div>
                 <div class="card stat-card">
                     <div class="stat-head">
-                        <span class="stat-label">PUPUK HARI INI</span>
-                        <div class="stat-icon" style="background: #fffbeb; color: #f59e0b;"><i class="fa-solid fa-flask"></i></div>
+                        <span class="stat-label">SKOR PERAWATAN</span>
+                        <div class="stat-icon" style="background: #fdf4ff; color: #d946ef;"><i class="fa-solid fa-heart-pulse"></i></div>
                     </div>
-                    <div class="stat-value" id="fertCount">0</div>
+                    <div class="stat-value" id="careScore">0%</div>
+                    <small style="color:var(--text-muted); font-size:0.75rem;">Keberhasilan Rutinitas</small>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-head">
+                        <span class="stat-label">SALDO KEBUN</span>
+                        <div class="stat-icon" style="background: #ecfdf5; color: #059669;"><i class="fa-solid fa-money-bill-wave"></i></div>
+                    </div>
+                    <div class="stat-value" id="dashBalance" style="font-size:1.5rem;">Rp 0</div>
+                </div>
+            </div>
+
+            <div class="chart-container-row">
+                <div class="card">
+                    <h3 style="margin-bottom:1.5rem;">Sebaran Ekosistem</h3>
+                    <div style="height: 250px;">
+                        <canvas id="plantChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:1.5rem;">Keuangan: Masuk vs Keluar</h3>
+                    <div style="height: 250px;">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 style="margin-bottom:1rem;">Aktivitas Jurnal (Pertumbuhan)</h3>
+                <div style="height: 200px;">
+                    <canvas id="growthChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="finance" class="view-section" style="display:none;">
+            <div class="header-row">
+                <div class="header-title">
+                    <h1>Manajemen Keuangan</h1>
+                    <p>Catat pengeluaran (pupuk, bibit) dan pemasukan (panen).</p>
+                </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <span class="stat-label">PEMASUKAN</span>
+                    <div class="stat-value" id="totalIncome" style="color:var(--money-in)">Rp 0</div>
+                </div>
+                <div class="card stat-card">
+                    <span class="stat-label">PENGELUARAN</span>
+                    <div class="stat-value" id="totalExpense" style="color:var(--money-out)">Rp 0</div>
+                </div>
+                <div class="card stat-card">
+                    <span class="stat-label">SALDO AKHIR</span>
+                    <div class="stat-value" id="netBalance">Rp 0</div>
                 </div>
             </div>
 
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <h3>Sebaran Ekosistem</h3>
-                    <button class="btn btn-secondary btn-sm" onclick="app.switchTab('garden')">Lihat Detail</button>
+                    <h3>Riwayat Transaksi</h3>
+                    <button class="btn btn-primary btn-sm" onclick="app.openFinanceModal()">
+                        <i class="fa-solid fa-plus"></i> Catat Transaksi
+                    </button>
                 </div>
-                <div style="height: 250px;">
-                    <canvas id="plantChart"></canvas>
+                <div id="transactionList" style="max-height:400px; overflow-y:auto;">
+                    <div style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada transaksi.</div>
                 </div>
             </div>
         </section>
@@ -422,6 +509,39 @@
         </section>
 
     </main>
+
+    <div class="modal-overlay" id="financeModal">
+        <div class="modal-box">
+            <div style="padding: 2rem;">
+                <h2 style="margin-bottom: 1.5rem;">Catat Transaksi</h2>
+                <form id="financeForm">
+                    <div class="form-group">
+                        <label class="form-label">Jenis</label>
+                        <select id="fType" class="search-input" onchange="app.toggleFinanceCat()">
+                            <option value="in">Pemasukan (Panen/Jual)</option>
+                            <option value="out">Pengeluaran (Beli/Rawat)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nominal (Rp)</label>
+                        <input type="number" id="fAmount" class="search-input" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Keterangan</label>
+                        <input type="text" id="fDesc" class="search-input" placeholder="Contoh: Jual Cabai 1kg" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tanggal</label>
+                        <input type="date" id="fDate" class="search-input" required>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="app.closeModal('financeModal')">Batal</button>
+                        <button type="submit" class="btn btn-primary" style="flex:1;">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="formModal">
         <div class="modal-box">
@@ -584,11 +704,9 @@
                     <label class="form-label">Masalah (Hama/Penyakit)</label>
                     <input type="text" id="cIssue" class="search-input" list="issueList" placeholder="Ketik atau pilih masalah..." oninput="app.checkClinicSuggestion()">
                     <datalist id="issueList">
-                        <!-- Populated by JS -->
-                    </datalist>
+                        </datalist>
                 </div>
                 
-                <!-- Suggestion Box -->
                 <div id="cSuggestion" style="display:none; background:var(--primary-light); color:var(--primary-dark); padding:10px; border-radius:8px; margin-bottom:1rem; font-size:0.9rem; border:1px solid var(--primary);">
                     <i class="fa-solid fa-lightbulb"></i> <b>Saran:</b> <span id="cSuggestionText"></span>
                 </div>
@@ -613,7 +731,7 @@
 
     <script>
         /**
-         * SMARTGARDEN PRO v3.2 + CLINIC
+         * SMARTGARDEN PRO v4.0 + FINANCE + ANALYTICS
          */
         
         const PLANT_KNOWLEDGE = {
@@ -629,7 +747,6 @@
             'jahe': { type: 'Herbal', schedule: [2,5], fert: [2], img: 'https://images.unsplash.com/photo-1635398656643-27c7d4281788?auto=format&fit=crop&w=600&q=80' }
         };
 
-        // DATABASE MASALAH & SOLUSI UMUM
         const CLINIC_KNOWLEDGE = {
             'Kutu Putih': 'Semprot air sabun cair + minyak goreng (1 sdt/liter) atau Neem Oil.',
             'Daun Kuning': 'Cek kelembaban tanah (kurang/lebih air). Beri pupuk Nitrogen jika tanah bagus.',
@@ -646,21 +763,28 @@
 
         const app = {
             data: [],
+            financeData: [],
             currentId: null,
-            editingId: null, 
+            editingId: null,
+            financeEditingId: null, 
             chart: null,
+            financeChart: null,
+            growthChart: null,
             activePreset: null,
 
             init() {
+                // Load Plant Data
                 let rawData = JSON.parse(localStorage.getItem('sg_pro_data')) || [];
                 this.data = rawData.map(p => {
                     if (!p.waterSchedule) { p.waterSchedule = [1, 4]; delete p.waterFreq; }
                     if (!p.fertSchedule) { p.fertSchedule = [1]; }
-                    // MIGRATION: Add Default Health Status
                     if (!p.healthStatus) { p.healthStatus = 'healthy'; }
                     if (!p.logs) { p.logs = []; }
                     return p;
                 });
+
+                // Load Finance Data (NEW)
+                this.financeData = JSON.parse(localStorage.getItem('sg_pro_finance')) || [];
 
                 const theme = localStorage.getItem('sg_theme') || 'light';
                 document.documentElement.setAttribute('data-theme', theme);
@@ -680,6 +804,11 @@
                 this.updateUI();
                 this.updateStorageInfo();
             },
+
+            saveFinance() {
+                localStorage.setItem('sg_pro_finance', JSON.stringify(this.financeData));
+                this.updateUI(); // Refresh Dashboard Finance Charts
+            },
             
             startClock() {
                 const updateTime = () => {
@@ -695,15 +824,47 @@
             },
             
             updateStorageInfo() {
-                const str = JSON.stringify(this.data);
+                const str = JSON.stringify(this.data) + JSON.stringify(this.financeData);
                 document.getElementById('storageUsed').innerText = (str.length / 1024).toFixed(2);
             },
 
             updateUI() {
                 this.renderDashboard();
                 this.renderGrid();
+                this.renderFinance();
+                this.checkHealthAlerts();
             },
 
+            // --- HEALTH MONITORING ---
+            checkHealthAlerts() {
+                const sickPlants = this.data.filter(p => p.healthStatus === 'sick');
+                const alertContainer = document.getElementById('sickAlertContainer');
+                
+                if (sickPlants.length > 0) {
+                    alertContainer.innerHTML = `
+                        <div class="alert-banner">
+                            <div>
+                                <h3 style="margin-bottom:2px;"><i class="fa-solid fa-triangle-exclamation"></i> Perhatian Diperlukan</h3>
+                                <p style="font-size:0.9rem;">Ada <b>${sickPlants.length}</b> tanaman yang terdeteksi sakit.</p>
+                            </div>
+                            <button class="btn btn-sm" style="background:white; color:var(--danger); border:none;" onclick="app.filterSickPlants()">Lihat</button>
+                        </div>
+                    `;
+                } else {
+                    alertContainer.innerHTML = '';
+                }
+            },
+
+            filterSickPlants() {
+                this.switchTab('garden');
+                document.getElementById('plantSearch').value = ''; 
+                // Force custom filter visually logic
+                // For simplicity, just sort by Urgency which floats sick plants to top roughly or rely on visual border
+                // Ideally we filter grid. Let's just scroll to grid.
+                document.getElementById('plantGrid').scrollIntoView();
+            },
+
+            // --- DASHBOARD LOGIC ---
             getNextDate(scheduleArr, lastDateStr) {
                 if(!scheduleArr || scheduleArr.length === 0) return new Date();
                 const today = new Date();
@@ -728,47 +889,187 @@
                 document.getElementById('totalCount').innerText = this.data.length;
                 const today = new Date().setHours(0,0,0,0);
                 let waterNeeded = 0;
-                let fertNeeded = 0;
-                const typeCounts = {};
+                let routineActions = 0;
+                let interventionActions = 0;
 
                 this.data.forEach(p => {
-                    typeCounts[p.type] = (typeCounts[p.type] || 0) + 1;
                     const nextWater = this.getNextDate(p.waterSchedule, p.lastWater);
                     if (nextWater.getTime() <= today) waterNeeded++;
-                    const nextFert = this.getNextDate(p.fertSchedule, p.lastFert);
-                    if (nextFert.getTime() <= today) fertNeeded++;
+                    
+                    // Analytics Calculation
+                    p.logs.forEach(l => {
+                        if (l.type === 'siram' || l.type === 'pupuk') routineActions++;
+                        if (l.type === 'clinic' && l.action.includes('Sakit')) interventionActions++;
+                    });
                 });
 
                 document.getElementById('waterCount').innerText = waterNeeded;
-                document.getElementById('fertCount').innerText = fertNeeded;
 
-                const ctx = document.getElementById('plantChart').getContext('2d');
-                if(this.chart) this.chart.destroy();
+                // 1. ANALYTICS: Care Score (Routine vs Intervention)
+                const totalActs = routineActions + interventionActions;
+                const score = totalActs === 0 ? 100 : Math.round((routineActions / totalActs) * 100);
+                document.getElementById('careScore').innerText = `${score}%`;
+
+                // 2. ECOSYSTEM CHART
+                const typeCounts = {};
+                this.data.forEach(p => typeCounts[p.type] = (typeCounts[p.type] || 0) + 1);
                 
-                const labels = Object.keys(typeCounts);
-                const values = Object.values(typeCounts);
-                const colors = ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'];
-
-                this.chart = new Chart(ctx, {
+                if(this.chart) this.chart.destroy();
+                this.chart = new Chart(document.getElementById('plantChart').getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: labels.length ? labels : ['Kosong'],
+                        labels: Object.keys(typeCounts),
                         datasets: [{
-                            data: values.length ? values : [1],
-                            backgroundColor: labels.length ? colors : ['#e2e8f0'],
-                            borderWidth: 0,
-                            hoverOffset: 10
+                            data: Object.values(typeCounts),
+                            backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6'],
+                            borderWidth: 0
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '75%',
-                        plugins: { legend: { position: 'right', labels: { boxWidth: 12, usePointStyle: true } } }
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } }
+                });
+
+                // 3. FINANCE CHART (New)
+                const income = this.financeData.filter(f => f.type === 'in').reduce((sum, f) => sum + f.amount, 0);
+                const expense = this.financeData.filter(f => f.type === 'out').reduce((sum, f) => sum + f.amount, 0);
+                document.getElementById('dashBalance').innerText = `Rp ${(income - expense).toLocaleString()}`;
+
+                if(this.financeChart) this.financeChart.destroy();
+                this.financeChart = new Chart(document.getElementById('financeChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Pemasukan', 'Pengeluaran'],
+                        datasets: [{
+                            label: 'Rupiah',
+                            data: [income, expense],
+                            backgroundColor: ['#10b981', '#f43f5e'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
                     }
+                });
+
+                // 4. GROWTH ACTIVITY CHART (New)
+                // Aggregate logs by month
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const activityData = new Array(12).fill(0);
+                this.data.forEach(p => {
+                    p.logs.forEach(l => {
+                        const m = new Date(l.date).getMonth();
+                        activityData[m]++;
+                    });
+                });
+
+                if(this.growthChart) this.growthChart.destroy();
+                this.growthChart = new Chart(document.getElementById('growthChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Frekuensi Perawatan',
+                            data: activityData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
                 });
             },
 
+            // --- FINANCE FUNCTIONS ---
+            renderFinance() {
+                const list = document.getElementById('transactionList');
+                list.innerHTML = '';
+                
+                let inc = 0, exp = 0;
+                
+                // Sort by date desc
+                const sorted = [...this.financeData].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                if (sorted.length === 0) {
+                    list.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Belum ada transaksi.</div>`;
+                } else {
+                    sorted.forEach(t => {
+                        if(t.type === 'in') inc += t.amount; else exp += t.amount;
+                        const color = t.type === 'in' ? 'var(--money-in)' : 'var(--money-out)';
+                        const sign = t.type === 'in' ? '+' : '-';
+                        const icon = t.type === 'in' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+                        
+                        list.innerHTML += `
+                            <div class="finance-row">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div style="width:40px; height:40px; border-radius:50%; background:${t.type === 'in' ? '#ecfdf5' : '#fff1f2'}; display:grid; place-items:center; color:${color}; font-size:1.1rem;">
+                                        <i class="fa-solid ${icon}"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600; color:var(--text-main);">${t.desc}</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">${new Date(t.date).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-weight:700; color:${color}; font-size:1.05rem;">
+                                        ${sign} Rp ${t.amount.toLocaleString()}
+                                    </div>
+                                    <div class="finance-actions" style="justify-content:flex-end; margin-top:4px;">
+                                        <button class="btn btn-sm btn-secondary" style="padding:4px 8px;" onclick="app.editFinanceLog(${t.id})"><i class="fa-solid fa-pencil"></i></button>
+                                        <button class="btn btn-sm btn-danger" style="padding:4px 8px; background:#fee2e2; color:#ef4444; border:none;" onclick="app.deleteFinanceLog(${t.id})"><i class="fa-solid fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                document.getElementById('totalIncome').innerText = `Rp ${inc.toLocaleString()}`;
+                document.getElementById('totalExpense').innerText = `Rp ${exp.toLocaleString()}`;
+                const net = inc - exp;
+                const elNet = document.getElementById('netBalance');
+                elNet.innerText = `Rp ${net.toLocaleString()}`;
+                elNet.style.color = net >= 0 ? 'var(--money-in)' : 'var(--money-out)';
+            },
+
+            editFinanceLog(id) {
+                const t = this.financeData.find(x => x.id === id);
+                if(!t) return;
+                
+                this.financeEditingId = id;
+                document.getElementById('fType').value = t.type;
+                document.getElementById('fAmount').value = t.amount;
+                document.getElementById('fDesc').value = t.desc;
+                document.getElementById('fDate').value = t.date;
+                
+                // Update modal title
+                document.querySelector('#financeModal h2').innerText = "Edit Transaksi";
+                
+                this.openModal('financeModal');
+            },
+
+            deleteFinanceLog(id) {
+                if(confirm("Hapus transaksi ini?")) {
+                    this.financeData = this.financeData.filter(x => x.id !== id);
+                    this.saveFinance();
+                    this.showToast("Transaksi dihapus");
+                }
+            },
+
+            openFinanceModal() {
+                document.getElementById('financeForm').reset();
+                document.getElementById('fDate').valueAsDate = new Date();
+                this.financeEditingId = null;
+                document.querySelector('#financeModal h2').innerText = "Catat Transaksi";
+                this.openModal('financeModal');
+            },
+
+            toggleFinanceCat() {
+                // Optional logic if categories differ by type
+            },
+
+            // --- EXISTING FUNCTIONS (Unchanged Logic) ---
             renderGrid() {
                 const container = document.getElementById('plantGrid');
                 const filter = document.getElementById('plantSearch').value || '';
@@ -800,7 +1101,6 @@
                     let statusClass = '';
                     let statusText = '';
                     let icon = 'fa-droplet';
-                    // LOGIKA VISUAL SAKIT
                     const isSick = p.healthStatus === 'sick';
                     const cardClass = isSick ? 'plant-card is-sick' : 'plant-card';
                     const sickBadge = isSick ? `<span class="health-badge sick"><i class="fa-solid fa-virus"></i> SAKIT</span>` : '';
@@ -866,7 +1166,6 @@
                 document.getElementById('dType').innerText = p.type;
                 document.getElementById('dImage').src = p.image || DEFAULT_IMG;
                 
-                // Show Health Status
                 const healthBadge = document.getElementById('dHealthStatus');
                 if(p.healthStatus === 'sick') {
                     healthBadge.innerText = "SAKIT / KARANTINA";
@@ -934,7 +1233,6 @@
                     if(l.type === 'siram') { icon = 'fa-droplet'; color = '#3b82f6'; }
                     else if(l.type === 'pupuk') { icon = 'fa-flask'; color = '#f59e0b'; }
                     else if(l.type === 'harvest') { icon = 'fa-basket-shopping'; color = '#f97316'; }
-                    // KLINIK ICON
                     else if(l.type === 'clinic') { icon = 'fa-suitcase-medical'; color = '#ef4444'; }
                     
                     tl.innerHTML += `
@@ -967,7 +1265,7 @@
                 this.save();
                 this.renderTimeline(this.data[idx]);
                 this.showToast(`${actionText} berhasil!`);
-                this.renderDashboard();
+                this.renderDashboard(); // Re-render for analytics
             },
 
             logHarvest() {
@@ -980,30 +1278,33 @@
                         action: `Panen ${amount}kg`,
                         amount: parseFloat(amount)
                     });
+                    
+                    // Auto-suggest to add to Finance
+                    if(confirm("Catat panen ini sebagai Pemasukan di Keuangan?")) {
+                        this.openFinanceModal();
+                        document.getElementById('fType').value = 'in';
+                        document.getElementById('fDesc').value = `Jual Panen ${this.data[idx].name} ${amount}kg`;
+                    }
+
                     this.save();
                     this.renderTimeline(this.data[idx]);
                     this.showToast("Panen tercatat!");
                 }
             },
 
-            // --- CLINIC FUNCTIONS (NEW) ---
             openClinicForm() {
                 const p = this.data.find(x => x.id === this.currentId);
                 if(!p) return;
-                // Set default values based on current state
                 document.getElementById('cStatus').value = p.healthStatus || 'healthy';
                 document.getElementById('cIssue').value = '';
                 document.getElementById('cSolution').value = '';
-                
-                // NEW: Reset Severity & Suggestion
                 document.getElementById('cSeverity').value = '';
                 document.getElementById('cSuggestion').style.display = 'none';
                 
-                // Populate Datalist
                 const dl = document.getElementById('issueList');
                 if(dl) dl.innerHTML = Object.keys(CLINIC_KNOWLEDGE).map(k => `<option value="${k}">`).join('');
                 
-                this.checkClinicStatus(); // Update UI state
+                this.checkClinicStatus();
                 this.openModal('clinicModal');
             },
 
@@ -1022,10 +1323,7 @@
                 const val = document.getElementById('cIssue').value;
                 const box = document.getElementById('cSuggestion');
                 const txt = document.getElementById('cSuggestionText');
-                
-                // Find matching key (case insensitive)
                 const key = Object.keys(CLINIC_KNOWLEDGE).find(k => k.toLowerCase() === val.toLowerCase());
-                
                 if(key) {
                     txt.innerText = CLINIC_KNOWLEDGE[key];
                     box.style.display = 'block';
@@ -1073,7 +1371,6 @@
                 this.save();
                 this.closeModal('clinicModal');
                 
-                // Update tampilan detail secara langsung agar status berubah
                 const healthBadge = document.getElementById('dHealthStatus');
                 if(healthBadge) {
                     if(status === 'sick') {
@@ -1086,7 +1383,7 @@
                 }
 
                 this.renderTimeline(this.data[idx]);
-                this.renderGrid(); // Refresh grid warna merah
+                this.renderGrid();
                 this.showToast("Data klinik disimpan!");
             },
 
@@ -1192,7 +1489,7 @@
             },
 
             exportData() {
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.data));
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({plants: this.data, finance: this.financeData}));
                 const a = document.createElement('a');
                 a.href = dataStr;
                 a.download = `smartgarden_backup_${new Date().toISOString().slice(0,10)}.json`;
@@ -1207,7 +1504,6 @@
                     const hStat = p.healthStatus === 'sick' ? 'Sakit' : 'Sehat';
                     p.logs.forEach(l => {
                         const dObj = new Date(l.date);
-                        // Escape quotes
                         const action = (l.action || "").replace(/"/g, '""');
                         const desc = (l.desc || "").replace(/"/g, '""');
                         csv += `"${p.name}","${p.type}","${wSched}","${fSched}","${hStat}","${dObj.toLocaleDateString()}","${dObj.toLocaleTimeString()}","${l.type}","${action} ${desc}"\n`;
@@ -1226,8 +1522,15 @@
                 const reader = new FileReader();
                 reader.onload = e => {
                     try {
-                        this.data = JSON.parse(e.target.result);
+                        const parsed = JSON.parse(e.target.result);
+                        if(parsed.plants) {
+                            this.data = parsed.plants;
+                            this.financeData = parsed.finance || [];
+                        } else {
+                            this.data = parsed; // Legacy support
+                        }
                         this.save();
+                        this.saveFinance();
                         this.showToast("Restore berhasil!");
                     } catch(err) { alert("File rusak!"); }
                 };
@@ -1238,8 +1541,13 @@
                 document.querySelectorAll('.view-section').forEach(e => e.style.display = 'none');
                 document.getElementById(id).style.display = 'block';
                 document.querySelectorAll('.nav-link').forEach(e => e.classList.remove('active'));
-                const navIdx = id === 'dashboard' ? 0 : id === 'garden' ? 1 : 2;
-                document.querySelectorAll('.nav-link')[navIdx].classList.add('active');
+                
+                // Active link logic
+                const links = document.querySelectorAll('.nav-link');
+                if(id === 'dashboard') links[0].classList.add('active');
+                if(id === 'garden') links[1].classList.add('active');
+                if(id === 'finance') links[2].classList.add('active');
+                if(id === 'settings') links[3].classList.add('active');
             },
             openModal(id) { document.getElementById(id).classList.add('active'); },
             closeModal(id) { document.getElementById(id).classList.remove('active'); },
@@ -1277,6 +1585,28 @@
         };
 
         // --- EVENTS ---
+        document.getElementById('financeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const type = document.getElementById('fType').value;
+            const amount = parseInt(document.getElementById('fAmount').value);
+            const desc = document.getElementById('fDesc').value;
+            const date = document.getElementById('fDate').value;
+            
+            if(app.financeEditingId) {
+                const idx = app.financeData.findIndex(x => x.id === app.financeEditingId);
+                if(idx > -1) {
+                    app.financeData[idx] = { id: app.financeEditingId, type, amount, desc, date };
+                    app.showToast("Transaksi diperbarui!");
+                }
+            } else {
+                app.financeData.push({ id: Date.now(), type, amount, desc, date });
+                app.showToast("Transaksi disimpan!");
+            }
+            
+            app.saveFinance();
+            app.closeModal('financeModal');
+        });
+
         document.getElementById('pImageInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -1330,7 +1660,7 @@
                         date: document.getElementById('pDate').value,
                         waterSchedule: waterSchedule,
                         fertSchedule: fertSchedule,
-                        healthStatus: 'healthy', // Default Healthy
+                        healthStatus: 'healthy',
                         lastWater: document.getElementById('pDate').value,
                         lastFert: document.getElementById('pDate').value,
                         image: imgBase64,
