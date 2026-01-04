@@ -12,6 +12,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         /* --- STYLE ASLI (LEGACY) --- */
@@ -499,6 +500,9 @@
                     <option value="az">Urutkan: A-Z</option>
                     <option value="newest">Urutkan: Terbaru</option>
                 </select>
+                <button class="btn btn-primary" onclick="app.startScanner()" style="background:var(--bg-card); color:var(--text-main); border:1px solid var(--border);">
+                    <i class="fa-solid fa-qrcode"></i> <span class="hide-mobile">Scan</span>
+                </button>
                 <button class="btn btn-primary" onclick="app.openFormModal()">
                     <i class="fa-solid fa-plus"></i> <span>Tambah Baru</span>
                 </button>
@@ -880,6 +884,24 @@
                 <div id="qrContainer" style="display:flex; justify-content:center; margin-bottom:1.5rem; background:white; padding:10px; border-radius:8px; border:1px solid var(--border);"></div>
                 
                 <button class="btn btn-primary" style="width:100%;" onclick="app.closeModal('qrModal')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="scannerModal">
+        <div class="modal-box" style="text-align: center; max-width: 500px; padding:0; overflow:hidden;">
+            <div style="padding: 1.5rem; background: var(--bg-card); border-bottom: 1px solid var(--border);">
+                <h3 style="margin:0;">Scan QR Code</h3>
+            </div>
+            <div style="position: relative; background: #000;">
+                <div id="reader" style="width: 100%; min-height: 300px;"></div>
+                <div id="scannerStatus" style="position: absolute; bottom: 10px; left: 0; right: 0; color: white; font-size: 0.8rem; z-index: 10;">
+                    Memulai kamera...
+                </div>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Arahkan kamera ke QR Code tanaman.</p>
+                <button class="btn btn-secondary" style="width:100%;" onclick="app.stopScanner()">Tutup Kamera</button>
             </div>
         </div>
     </div>
@@ -1926,7 +1948,8 @@
                 const container = document.getElementById('qrContainer');
                 container.innerHTML = ''; // Clear previous
                 
-                const url = `${window.location.origin}${window.location.pathname}?plant_id=${p.id}`;
+                // Encode URL properly to ensure validity
+                const url = encodeURI(`${window.location.origin}${window.location.pathname}?plant_id=${p.id}`);
                 
                 try {
                     new QRCode(container, {
@@ -1942,6 +1965,77 @@
                 }
                 
                 this.openModal('qrModal');
+            },
+
+            html5QrcodeScanner: null,
+            
+            startScanner() {
+                this.openModal('scannerModal');
+                const statusElem = document.getElementById('scannerStatus');
+                statusElem.innerText = "Meminta izin kamera...";
+                
+                if(this.html5QrcodeScanner) {
+                    // Already running?
+                    return;
+                }
+
+                this.html5QrcodeScanner = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                
+                this.html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    (decodedText, decodedResult) => {
+                        // Success callback
+                        this.stopScanner();
+                        this.handleScanResult(decodedText);
+                    },
+                    (errorMessage) => {
+                        // Error callback (ignore frequent errors during scanning)
+                    }
+                ).then(() => {
+                    statusElem.innerText = "Kamera aktif. Arahkan ke QR Code.";
+                }).catch((err) => {
+                    statusElem.innerText = "Gagal mengakses kamera: " + err;
+                });
+            },
+
+            stopScanner() {
+                if(this.html5QrcodeScanner) {
+                    this.html5QrcodeScanner.stop().then(() => {
+                        this.html5QrcodeScanner.clear();
+                        this.html5QrcodeScanner = null;
+                        this.closeModal('scannerModal');
+                    }).catch(err => {
+                        console.error("Failed to stop scanner", err);
+                        this.closeModal('scannerModal');
+                    });
+                } else {
+                    this.closeModal('scannerModal');
+                }
+            },
+
+            handleScanResult(text) {
+                // Try to parse URL parameters
+                try {
+                    const url = new URL(text);
+                    const plantId = url.searchParams.get("plant_id");
+                    
+                    if (plantId) {
+                        const pid = parseInt(plantId);
+                        if(this.data.find(p => p.id === pid)) {
+                            this.switchTab('garden');
+                            this.openDetail(pid);
+                            this.showToast("Tanaman ditemukan!");
+                        } else {
+                            this.showToast("Tanaman tidak ditemukan di database ini.");
+                        }
+                    } else {
+                        this.showToast("QR Code tidak valid (Bukan QR Tanaman).");
+                    }
+                } catch (e) {
+                    this.showToast("Format QR Code tidak dikenali.");
+                }
             },
 
             async compressImage(file) {

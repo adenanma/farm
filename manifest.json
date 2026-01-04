@@ -2,6 +2,7 @@
   "name": "SmartGarden MADNN Pro",
   "short_name": "SmartGarden",
   "start_url": "./index-jurnal.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#059669",
